@@ -2,7 +2,7 @@ import { MaintenanceConfig, PageConfig, WorkerConfig } from './types/config'
 
 const pageConfig: PageConfig = {
   // Title for your status page
-  title: "lbenicio Status Page",
+  title: 'lbenicio Status Page',
   // Links shown at the header of your status page, could set `highlight` to `true`
   links: [
     { link: 'https://github.com/lbenicio', label: 'GitHub' },
@@ -48,7 +48,7 @@ const workerConfig: WorkerConfig = {
       // [OPTIONAL] headers to be sent
       headers: {
         'User-Agent': 'Uptimeflare',
-      }
+      },
     },
     {
       // `id` should be unique, history will be kept if the `id` remains constant
@@ -72,7 +72,7 @@ const workerConfig: WorkerConfig = {
       // [OPTIONAL] headers to be sent
       headers: {
         'User-Agent': 'Uptimeflare',
-      }
+      },
     },
     {
       // `id` should be unique, history will be kept if the `id` remains constant
@@ -96,7 +96,7 @@ const workerConfig: WorkerConfig = {
       // [OPTIONAL] headers to be sent
       headers: {
         'User-Agent': 'Uptimeflare',
-      }
+      },
     },
     {
       // `id` should be unique, history will be kept if the `id` remains constant
@@ -120,7 +120,7 @@ const workerConfig: WorkerConfig = {
       // [OPTIONAL] headers to be sent
       headers: {
         'User-Agent': 'Uptimeflare',
-      }
+      },
     },
     {
       // `id` should be unique, history will be kept if the `id` remains constant
@@ -144,7 +144,7 @@ const workerConfig: WorkerConfig = {
       // [OPTIONAL] headers to be sent
       headers: {
         'User-Agent': 'Uptimeflare',
-      }
+      },
     },
     {
       // `id` should be unique, history will be kept if the `id` remains constant
@@ -168,7 +168,7 @@ const workerConfig: WorkerConfig = {
       // [OPTIONAL] headers to be sent
       headers: {
         'User-Agent': 'Uptimeflare',
-      }
+      },
     },
     {
       // `id` should be unique, history will be kept if the `id` remains constant
@@ -192,7 +192,7 @@ const workerConfig: WorkerConfig = {
       // [OPTIONAL] headers to be sent
       headers: {
         'User-Agent': 'Uptimeflare',
-      }
+      },
     },
   ],
   notification: {},
@@ -228,9 +228,7 @@ const workerConfig: WorkerConfig = {
 // Also, related downtime notifications will be skipped (if any)
 // Of course, you can leave it empty if you don't need this feature
 // const maintenances: MaintenanceConfig[] = []
-const maintenances: MaintenanceConfig[] = [
-  {},
-]
+const maintenances: MaintenanceConfig[] = []
 
 // Don't forget this, otherwise compilation fails.
 export { pageConfig, workerConfig, maintenances }
