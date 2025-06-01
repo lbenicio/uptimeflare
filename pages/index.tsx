@@ -65,7 +65,7 @@ export default function Home({
           </div>
         )}
 
-        <Divider mt="lg" />
+        <Divider mt="5rem" mb="2rem" />
         <Text
           size="xs"
           mt="xs"
@@ -75,16 +75,16 @@ export default function Home({
           }}
         >
           Open-source monitoring and status page powered by{' '}
-          <a href="https://github.com/lyc8503/UptimeFlare" target="_blank">
+          <a href="https://github.com/lbenicio/UptimeFlare" target="_blank">
             Uptimeflare
           </a>{' '}
           and{' '}
           <a href="https://www.cloudflare.com/" target="_blank">
             Cloudflare
           </a>
-          , made with ❤ by{' '}
-          <a href="https://github.com/lyc8503" target="_blank">
-            lyc8503
+          , made by{' '}
+          <a href="https://github.com/lbenicio" target="_blank">
+            lbenicio
           </a>
           .
         </Text>

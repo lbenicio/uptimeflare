@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "preview": "npx @cloudflare/next-on-pages && wrangler pages dev .vercel/output/static --compatibility-flag nodejs_compat --kv UPTIMEFLARE_STATE",
+    "deploy": "npx @cloudflare/next-on-pages && npx wrangler pages deploy .vercel/output/static --project-name uptimeflare",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"

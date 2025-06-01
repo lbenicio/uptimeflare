@@ -2,6 +2,7 @@ import { Container, Group, Text } from '@mantine/core'
 import classes from '@/styles/Header.module.css'
 import { pageConfig } from '@/uptime.config'
 import { PageConfigLink } from '@/types/config'
+import Image from 'next/image'
 
 export default function Header() {
   const linkToElement = (link: PageConfigLink) => {
@@ -22,10 +23,19 @@ export default function Header() {
     <header className={classes.header}>
       <Container size="md" className={classes.inner}>
         <div>
-          <a href="https://github.com/lyc8503/UptimeFlare" target="_blank">
-            <Text size="xl" span>
-              🕒
-            </Text>
+          <a
+            href="https://github.com/lbenicio/UptimeFlare"
+            target="_blank"
+            style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}
+          >
+            <Image
+              src="/favicon.ico"
+              alt="Logo"
+              width={32}
+              height={32}
+              style={{ marginRight: '1rem' }}
+            />
+
             <Text
               size="xl"
               span
@@ -33,7 +43,7 @@ export default function Header() {
               variant="gradient"
               gradient={{ from: 'blue', to: 'cyan', deg: 90 }}
             >
-              UptimeFlare
+              lbenicio status page
             </Text>
           </a>
         </div>
