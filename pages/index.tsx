@@ -69,7 +69,7 @@ export default function Home({
         <Text
           size="xs"
           mt="xs"
-          mb="xs"
+          pb="1rem"
           style={{
             textAlign: 'center',
           }}
