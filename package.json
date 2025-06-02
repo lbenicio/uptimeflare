@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "preview": "npx @cloudflare/next-on-pages && wrangler pages dev .vercel/output/static --compatibility-flag nodejs_compat --kv UPTIMEFLARE_STATE",
+    "preview": "NODE_ENV=development npx @cloudflare/next-on-pages && wrangler pages dev .vercel/output/static --compatibility-flag nodejs_compat nodejs_compat_populate_process_env --kv UPTIMEFLARE_STATE",
     "deploy": "npx @cloudflare/next-on-pages && npx wrangler pages deploy .vercel/output/static --project-name uptimeflare",
     "build": "next build",
     "start": "next start",
@@ -38,6 +38,6 @@
     "postcss-simple-vars": "^7.0.1",
     "prettier": "3.0.3",
     "typescript": "^5",
-    "wrangler": "^4.10.0"
+    "wrangler": "^4.18.0"
   }
 }

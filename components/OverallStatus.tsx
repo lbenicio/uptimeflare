@@ -49,29 +49,30 @@ export default function OverallStatus({
   useEffect(() => {
     const interval = setInterval(() => {
       if (!isWindowVisible) return
-      if (currentTime - state.lastUpdate > 300 && currentTime - openTime > 30) {
-        window.location.reload()
-      }
+      // if (currentTime - state.lastUpdate > 300 && currentTime - openTime > 30) {
+      //   window.location.reload()
+      // }
       setCurrentTime(Math.round(Date.now() / 1000))
     }, 1000)
     return () => clearInterval(interval)
   })
 
   const now = new Date()
-  let filteredMaintenances: (Omit<MaintenanceConfig, 'monitors'> & { monitors?: MonitorTarget[] })[] =
-    maintenances
-      .filter((m) => now >= new Date(m.start) && (!m.end || now <= new Date(m.end)))
-      .map((maintenance) => ({
-        ...maintenance,
-        monitors: maintenance.monitors?.map(
-          (monitorId) => monitors.find((mon) => monitorId === mon.id)!
-        ),
-      }))
+  let filteredMaintenances: (Omit<MaintenanceConfig, 'monitors'> & {
+    monitors?: MonitorTarget[]
+  })[] = maintenances
+    .filter((m) => now >= new Date(m.start) && (!m.end || now <= new Date(m.end)))
+    .map((maintenance) => ({
+      ...maintenance,
+      monitors: maintenance.monitors?.map(
+        (monitorId) => monitors.find((mon) => monitorId === mon.id)!
+      ),
+    }))
 
   return (
     <Container size="md" mt="xl">
       <Center>{icon}</Center>
-      <Title mt="sm" style={{ textAlign: 'center' }} order={1}>
+      <Title mt="xs" style={{ textAlign: 'center' }} order={1}>
         {statusString}
       </Title>
       <Title mt="sm" style={{ textAlign: 'center', color: '#70778c' }} order={5}>

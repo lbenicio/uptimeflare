@@ -9,6 +9,7 @@ import Header from '@/components/Header'
 import MonitorList from '@/components/MonitorList'
 import { Center, Divider, Text } from '@mantine/core'
 import MonitorDetail from '@/components/MonitorDetail'
+import mock from '@/mock/state.json'
 
 export const runtime = 'experimental-edge'
 const inter = Inter({ subsets: ['latin'] })
@@ -99,7 +100,10 @@ export async function getServerSideProps() {
   }
 
   // Read state as string from KV, to avoid hitting server-side cpu time limit
-  const state = (await UPTIMEFLARE_STATE?.get('state')) as unknown as MonitorState
+  const state =
+    process.env.NODE_ENV !== 'development'
+      ? ((await UPTIMEFLARE_STATE?.get('state')) as unknown as MonitorState)
+      : (JSON.stringify(mock) as unknown as MonitorState)
 
   // Only present these values to client
   const monitors = workerConfig.monitors.map((monitor) => {

@@ -29,6 +29,7 @@ export default function DetailBar({
 
   const todayStart = new Date()
   todayStart.setHours(0, 0, 0, 0)
+  const uptimePercentBarsWidth = self.innerWidth / 90
 
   for (let i = 89; i >= 0; i--) {
     const dayStart = Math.round(todayStart.getTime() / 1000) - i * 86400
@@ -96,7 +97,7 @@ export default function DetailBar({
         <div
           style={{
             height: '20px',
-            width: '7px',
+            width: `${uptimePercentBarsWidth}px`,
             background: getColor(dayPercent, false),
             borderRadius: '2px',
             marginLeft: '1px',
@@ -139,10 +140,10 @@ export default function DetailBar({
           marginTop: '10px',
           marginBottom: '5px',
         }}
-        visibleFrom="540"
+        visibleFrom="180"
         ref={barRef}
       >
-        {uptimePercentBars.slice(Math.floor(Math.max(9 * 90 - barRect.width, 0) / 9), 90)}
+        {uptimePercentBars.slice(Math.floor(Math.max(1 * 90 - barRect.width, 0) / 9), 90)}
       </Box>
     </>
   )
