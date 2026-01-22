@@ -3,9 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "vercel-build": "next build",
+    "build": "next build",
     "start:dev": "next dev",
     "start:preview": "NODE_ENV=development @cloudflare/next-on-pages && wrangler pages dev .vercel/output/static --compatibility-flag nodejs_compat nodejs_compat_populate_process_env --kv UPTIMEFLARE_STATE",
-    "deploy:cf": "@cloudflare/next-on-pages && wrangler pages deploy .vercel/output/static --project-name uptimeflare",
+    "deploy:cf": "npx @cloudflare/next-on-pages && wrangler pages deploy .vercel/output/static --project-name uptimeflare",
     "build:pkg": "next build",
     "start:prod": "next start",
     "fmt:lint": "next lint",
