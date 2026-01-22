@@ -10,8 +10,8 @@ import MonitorList from '@/components/MonitorList'
 import { Center, Divider, Text } from '@mantine/core'
 import MonitorDetail from '@/components/MonitorDetail'
 import mock from '@/mock/state.json'
+import { getCloudflareContext } from '@opennextjs/cloudflare'
 
-export const runtime = 'experimental-edge'
 const inter = Inter({ subsets: ['latin'] })
 
 export default function Home({
@@ -95,15 +95,19 @@ export default function Home({
 }
 
 export async function getServerSideProps() {
-  const { UPTIMEFLARE_STATE } = process.env as unknown as {
-    UPTIMEFLARE_STATE: KVNamespace
-  }
+  let state: MonitorState
 
-  // Read state as string from KV, to avoid hitting server-side cpu time limit
-  const state =
-    process.env.NODE_ENV !== 'development'
-      ? ((await UPTIMEFLARE_STATE?.get('state')) as unknown as MonitorState)
-      : (JSON.stringify(mock) as unknown as MonitorState)
+  if (process.env.NODE_ENV !== 'development') {
+    const ctx = await getCloudflareContext({ async: true })
+    const { UPTIMEFLARE_STATE } = ctx.env as unknown as {
+      UPTIMEFLARE_STATE: KVNamespace
+    }
+
+    // Read state as string from KV, to avoid hitting server-side cpu time limit
+    state = (await UPTIMEFLARE_STATE?.get('state')) as unknown as MonitorState
+  } else {
+    state = JSON.stringify(mock) as unknown as MonitorState
+  }
 
   // Only present these values to client
   const monitors = workerConfig.monitors.map((monitor) => {

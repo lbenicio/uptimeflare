@@ -77,7 +77,7 @@ jobs:
 
       - name: Build page
         run: |
-          npx @cloudflare/next-on-pages
+          npx opennextjs-cloudflare build
 
       - name: Remove durable objects bindings (temporary workaround)
         continue-on-error: true
@@ -155,9 +155,9 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ steps.fetch_account_id.outputs.account_id }}
 
       # Currently Terraform Cloudflare provider doesn't support direct upload, use wrangler to upload instead.
-      - name: Upload pages
+      - name: Deploy pages (OpenNext)
         run: |
-          npx wrangler pages deploy .vercel/output/static --project-name uptimeflare
+          npx opennextjs-cloudflare deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ steps.fetch_account_id.outputs.account_id }}

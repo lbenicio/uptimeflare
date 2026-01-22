@@ -39,6 +39,17 @@ Some screenshots:
 
 Please refer to [Wiki](https://github.com/lyc8503/UptimeFlare/wiki)
 
+### Development - Cloudflare local dev (optional)
+
+To enable Cloudflare local dev bindings (optional), install the dev helper locally:
+
+```bash
+npm i -D @cloudflare/next-on-pages --legacy-peer-deps
+```
+
+Note: this helper currently specifies Next up to 15.x as a peer. When using Next 16, install it with `--legacy-peer-deps`. The project will skip dev bindings if the helper is not installed (see `next.config.js`).
+
+
 ## New features (TODOs)
 
 - [x] Specify region for monitors
