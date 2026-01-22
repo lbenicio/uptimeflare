@@ -20,8 +20,8 @@ export default function Header() {
   }
 
   return (
-    <header className={classes.header}>
-      <Container size="md" className={classes.inner}>
+    <header className={classes.header} style={{ paddingLeft: '1rem', paddingRight: '1rem' }}>
+      <Container fluid={true} className={classes.inner}>
         <div>
           <a
             href="https://github.com/lbenicio/UptimeFlare"
