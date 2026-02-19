@@ -73,16 +73,16 @@ async function notifyWithApprise(
   title: string,
   body: string
 ) {
-  console.log(
-    'Sending Apprise notification: ' +
-      title +
-      '-' +
-      body +
-      ' to ' +
-      recipientUrl +
-      ' via ' +
-      appriseApiServer
-  )
+  // console.log(
+  //   'Sending Apprise notification: ' +
+  //     title +
+  //     '-' +
+  //     body +
+  //     ' to ' +
+  //     recipientUrl +
+  //     ' via ' +
+  //     appriseApiServer
+  // )
   try {
     const resp = await fetchTimeout(appriseApiServer, 5000, {
       method: 'POST',
@@ -99,14 +99,14 @@ async function notifyWithApprise(
     })
 
     if (!resp.ok) {
-      console.log(
+      console.error(
         'Error calling apprise server, code: ' + resp.status + ', response: ' + (await resp.text())
       )
     } else {
       console.log('Apprise notification sent successfully, code: ' + resp.status)
     }
   } catch (e) {
-    console.log('Error calling apprise server: ' + e)
+    console.error('Error calling apprise server: ' + e)
   }
 }
 

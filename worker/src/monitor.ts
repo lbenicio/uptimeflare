@@ -1,4 +1,4 @@
-import { MonitorTarget } from '../../uptime.types'
+import { MonitorTarget } from '../../types/config'
 import { withTimeout, fetchTimeout } from './util'
 
 export async function getStatus(
@@ -26,13 +26,13 @@ export async function getStatus(
       await withTimeout(monitor.timeout || 10000, socket.opened)
       await socket.close()
 
-      console.log(`${monitor.name} connected to ${monitor.target}`)
+      // console.log(`${monitor.name} connected to ${monitor.target}`)
 
       status.ping = Date.now() - startTime
       status.up = true
       status.err = ''
     } catch (e: Error | any) {
-      console.log(`${monitor.name} errored with ${e.name}: ${e.message}`)
+      console.error(`${monitor.name} errored with ${e.name}: ${e.message}`)
       if (e.message.includes('timed out')) {
         status.ping = monitor.timeout || 10000
       }
@@ -53,7 +53,7 @@ export async function getStatus(
         },
       })
 
-      console.log(`${monitor.name} responded with ${response.status}`)
+      // console.log(`${monitor.name} responded with ${response.status}`)
       status.ping = Date.now() - startTime
 
       if (monitor.expectedCodes) {
@@ -109,7 +109,7 @@ export async function getStatus(
       status.up = true
       status.err = ''
     } catch (e: any) {
-      console.log(`${monitor.name} errored with ${e.name}: ${e.message}`)
+      console.error(`${monitor.name} errored with ${e.name}: ${e.message}`)
       if (e.name === 'AbortError') {
         status.ping = monitor.timeout || 10000
         status.up = false
