@@ -19,7 +19,7 @@
     "deps:update": "npm-check-updates -u && npm run deps:install"
   },
   "dependencies": {
-    "@cloudflare/workers-types": "^4.20260120.0",
+    "@cloudflare/workers-types": "^4.20260607.1",
     "@mantine/core": "^8.3.13",
     "@mantine/hooks": "^8.3.13",
     "@tabler/icons-react": "^3.36.1",
