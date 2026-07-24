@@ -46,6 +46,6 @@
     "postcss-simple-vars": "^7.0.1",
     "prettier": "3.8.4",
     "typescript": "^6",
-    "wrangler": "^4.99.0"
+    "wrangler": "^4.103.0"
   }
 }
