@@ -10,6 +10,7 @@ export function createInitialMonitorState(): MonitorState {
     overallDown: 0,
     incident: {},
     latency: {},
+    certificates: {},
   }
 }
 
