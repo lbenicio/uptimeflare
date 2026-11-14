@@ -3,23 +3,15 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "build": "next build",
-    "vercel-build": "next build",
     "start:dev": "next dev",
-    "start:preview": "npm run preview",
-    "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
-    "configure:d1": "node scripts/set-wrangler-d1-id.mjs \"$UPTIMEFLARE_D1_DATABASE_ID\"",
-    "deploy:cf": "npm run configure:d1 && opennextjs-cloudflare build && opennextjs-cloudflare deploy",
-    "upload:cf": "npm run configure:d1 && opennextjs-cloudflare build && opennextjs-cloudflare upload",
+    "deploy:cf": "node scripts/set-wrangler-d1-id.mjs \"$UPTIMEFLARE_D1_DATABASE_ID\" && opennextjs-cloudflare build && opennextjs-cloudflare deploy",
+    "upload:cf": "node scripts/set-wrangler-d1-id.mjs \"$UPTIMEFLARE_D1_DATABASE_ID\" && opennextjs-cloudflare build && opennextjs-cloudflare upload",
     "build:pkg": "next build",
     "start:prod": "next start",
     "fmt:lint": "next lint",
-    "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
     "deps:install": "npm install --verbose --no-fund --no-audit",
     "deps:ci": "npm ci --verbose --no-fund --no-audit",
-    "deps:update": "npm-check-updates -u && npm run deps:install",
-    "deploy": "npm run configure:d1 && opennextjs-cloudflare build && opennextjs-cloudflare deploy",
-    "upload": "npm run configure:d1 && opennextjs-cloudflare build && opennextjs-cloudflare upload"
+    "deps:update": "npm-check-updates -u && npm run deps:install"
   },
   "dependencies": {
     "@cloudflare/workers-types": "^5.20261114.1",
