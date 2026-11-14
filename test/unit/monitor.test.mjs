@@ -1,4 +1,4 @@
-import { describe, it, mock } from 'node:test'
+import { beforeEach, describe, it, mock } from 'node:test'
 import assert from 'node:assert/strict'
 import { EventEmitter } from 'node:events'
 
@@ -37,6 +37,12 @@ mock.module('cloudflare:sockets', {
   namedExports: { connect: (...args) => socketsConnect(...args) },
 })
 
+beforeEach(() => {
+  tlsBehavior = {}
+  socketsConnect = () => ({ opened: Promise.resolve(), close: async () => {} })
+  identityCheck = () => undefined
+})
+
 const { getStatus } = await import('../../worker/src/monitor.ts')
 
 const baseMonitor = {
@@ -53,8 +59,6 @@ function response(body = 'ok', status = 200) {
 
 async function runStatus(t, monitor = baseMonitor, cloudflare) {
   t.mock.method(globalThis, 'fetch', async () => response())
-  tlsBehavior = {}
-  identityCheck = () => undefined
   return getStatus(monitor, cloudflare)
 }
 
