@@ -71,8 +71,12 @@ const Worker = {
 
     // Load status from D1, initializing an empty state for a new installation.
     let state: MonitorState = await readOrCreateMonitorState(env.UPTIMEFLARE_DB)
+    state.certificates = state.certificates || {}
     const monitorStateMissing = workerConfig.monitors.some(
-      (monitor) => !state.incident[monitor.id] || !state.latency[monitor.id]
+      (monitor) =>
+        !state.incident[monitor.id] ||
+        !state.latency[monitor.id] ||
+        (monitor.certificateExpiryWarningDays !== undefined && !state.certificates?.[monitor.id])
     )
     state.overallDown = 0
     state.overallUp = 0
@@ -114,7 +118,7 @@ const Worker = {
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify(monitor),
                 })
-              ).json<{ location: string; status: { ping: number; up: boolean; err: string } }>()
+              ).json<{ location: string; status: { ping: number; up: boolean; err: string; certificate?: import('../../types/config').CertificateCheck } }>()
             }
             checkLocation = resp.location
             status = resp.status
@@ -134,6 +138,10 @@ const Worker = {
 
         // const status = await getStatus(monitor)
         const currentTimeSecond = Math.round(Date.now() / 1000)
+
+        if (status.certificate) {
+          state.certificates![monitor.id] = status.certificate
+        }
 
         // Update counters
         status.up ? state.overallUp++ : state.overallDown++
