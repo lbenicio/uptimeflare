@@ -31,6 +31,7 @@ export type MonitorTarget = {
   hideLatencyChart?: boolean
   expectedCodes?: number[]
   timeout?: number
+  certificateExpiryWarningDays?: number
   headers?: { [key: string]: string | number }
   body?: string
   responseKeyword?: string
@@ -40,7 +41,7 @@ export type MonitorTarget = {
 }
 
 export type WorkerConfig = {
-  kvWriteCooldownMinutes: number
+  stateWriteCooldownMinutes: number
   monitors: MonitorTarget[]
   notification?: Notification
   callbacks?: Callbacks
@@ -73,6 +74,7 @@ export type Callbacks = {
 }
 
 export type MonitorState = {
+  version?: number
   lastUpdate: number
   overallUp: number
   overallDown: number

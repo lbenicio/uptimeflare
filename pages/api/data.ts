@@ -3,25 +3,23 @@ import { MonitorState } from '@/types/config'
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { getCloudflareContext } from '@opennextjs/cloudflare'
 import mock from '@/mock/state.json'
-import type { KVNamespace } from '@cloudflare/workers-types'
+import { readMonitorState } from '@/lib/monitor-state'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  // In production, read from the Cloudflare KV binding via OpenNext.
-  // In development, fall back to the local `mock` to avoid failing when KV isn't available.
-  const stateStr =
+  res.setHeader('Cache-Control', 'no-store, max-age=0')
+  const state =
     process.env.NODE_ENV !== 'development'
       ? await (async () => {
           const { env } = await getCloudflareContext({ async: true })
-          const UPTIMEFLARE_STATE = env.UPTIMEFLARE_STATE as KVNamespace
-          return await UPTIMEFLARE_STATE?.get('state')
+          const { UPTIMEFLARE_DB } = env as { UPTIMEFLARE_DB: D1Database }
+          return await readMonitorState(UPTIMEFLARE_DB)
         })()
-      : JSON.stringify(mock)
+      : (mock as MonitorState)
 
-  if (!stateStr) {
-    res.status(500).json({ error: 'No data available' })
+  if (!state) {
+    res.status(503).json({ error: 'No data available yet' })
     return
   }
-  const state = JSON.parse(stateStr) as MonitorState
 
   const monitors: Record<string, any> = {}
 

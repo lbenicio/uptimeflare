@@ -1,4 +1,10 @@
 name = "uptimeflare_worker"
 main = "src/index.ts"
-compatibility_date = "2025-04-02"
-kv_namespaces = [{ binding = "UPTIMEFLARE_STATE", id = "UPTIMEFLARE_STATE" }]
+compatibility_date = "2026-11-14"
+compatibility_flags = ["nodejs_compat"]
+
+[[d1_databases]]
+binding = "UPTIMEFLARE_DB"
+database_name = "uptimeflare_state"
+database_id = "00000000-0000-0000-0000-000000000000"
+migrations_dir = "migrations"

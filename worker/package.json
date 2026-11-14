@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "build:pkg": "next build",
-    "cf:deploy": "wrangler deploy",
+    "cf:deploy": "node ../scripts/set-wrangler-d1-id.mjs \"$UPTIMEFLARE_D1_DATABASE_ID\" && wrangler deploy",
     "start:dev": "wrangler dev --config wrangler-dev.toml --test-scheduled --persist-to ../.wrangler/state",
     "deps:install": "npm install --verbose --no-fund --no-audit",
     "deps:ci": "npm ci --verbose --no-fund --no-audit",

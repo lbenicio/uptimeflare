@@ -75,88 +75,53 @@ jobs:
           cd worker
           npx wrangler deploy src/index.ts --outdir dist --dry-run
 
-      - name: Build page
-        run: |
-          npx opennextjs-cloudflare build
-
-      - name: Remove durable objects bindings (temporary workaround)
-        continue-on-error: true
-        # This is a workaround to fix Cloudflare provider 4.x import crash when there's a durable object binding.
-        run: |
-          # Get bindings without durable objects
-          NEW_BINDINGS=$(curl --request GET --fail-with-body \
-               --url https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/scripts/uptimeflare_worker/settings \
-               --header 'Authorization: Bearer '$CLOUDFLARE_API_TOKEN \
-               --header 'Content-Type: application/json' | jq '.result.bindings | map(select(.type != "durable_object_namespace"))' -jc)
-          echo "New bindings: $NEW_BINDINGS"
-
-          # Remove durable objects bindings
-          curl --request PATCH --fail-with-body \
-               --url https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/scripts/uptimeflare_worker/settings \
-               --header 'Authorization: Bearer '$CLOUDFLARE_API_TOKEN \
-               -F 'settings={"bindings":'$NEW_BINDINGS'}'
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ steps.fetch_account_id.outputs.account_id }}
-
       - name: Deploy using Terraform
         # As we don't save terraform state somewhere, we need to import the existing resources
         run: |
           terraform init
 
-          KV_ID=$(curl https://api.cloudflare.com/client/v4/accounts/$TF_VAR_CLOUDFLARE_ACCOUNT_ID/storage/kv/namespaces\?per_page\=100 --header 'Authorization: Bearer '$CLOUDFLARE_API_TOKEN | jq -r '.result[] | select(.title == "uptimeflare_kv") | .id')
+          HAS_REMOTE_CHECKER=$(curl --silent --show-error \
+               --url https://api.cloudflare.com/client/v4/accounts/$TF_VAR_CLOUDFLARE_ACCOUNT_ID/workers/scripts/uptimeflare_worker/settings \
+               --header 'Authorization: Bearer '$CLOUDFLARE_API_TOKEN | jq -r '[.result.bindings[]? | select(.type == "durable_object_namespace" and .name == "REMOTE_CHECKER_DO")] | length > 0')
+          if [ "$HAS_REMOTE_CHECKER" = "true" ]; then
+            export TF_VAR_CREATE_REMOTE_CHECKER_NAMESPACE=false
+          else
+            export TF_VAR_CREATE_REMOTE_CHECKER_NAMESPACE=true
+          fi
+
+          KV_ID=$(curl --fail-with-body https://api.cloudflare.com/client/v4/accounts/$TF_VAR_CLOUDFLARE_ACCOUNT_ID/storage/kv/namespaces\?per_page\=100 --header 'Authorization: Bearer '$CLOUDFLARE_API_TOKEN | jq -r '.result[] | select(.title == "uptimeflare_kv") | .id')
+          D1_ID=$(curl --fail-with-body https://api.cloudflare.com/client/v4/accounts/$TF_VAR_CLOUDFLARE_ACCOUNT_ID/d1/database --header 'Authorization: Bearer '$CLOUDFLARE_API_TOKEN | jq -r '.result[] | select(.name == "uptimeflare_state") | (.uuid // .id // empty)')
+          if [ -n "$D1_ID" ]; then
+            terraform import cloudflare_d1_database.uptimeflare "$TF_VAR_CLOUDFLARE_ACCOUNT_ID/$D1_ID"
+          else
+            echo "D1 database not found; Terraform will create it."
+          fi
           if [ -n "$KV_ID" ]; then
             echo "Importing existing resources..."
             terraform import cloudflare_workers_kv_namespace.uptimeflare_kv "$TF_VAR_CLOUDFLARE_ACCOUNT_ID/$KV_ID"
-            terraform import cloudflare_worker_script.uptimeflare "$TF_VAR_CLOUDFLARE_ACCOUNT_ID/uptimeflare_worker"
-            terraform import cloudflare_worker_cron_trigger.uptimeflare_worker_cron "$TF_VAR_CLOUDFLARE_ACCOUNT_ID/uptimeflare_worker"
+            terraform import cloudflare_workers_script.uptimeflare "$TF_VAR_CLOUDFLARE_ACCOUNT_ID/uptimeflare_worker"
+            terraform import cloudflare_workers_cron_trigger.uptimeflare_worker_cron "$TF_VAR_CLOUDFLARE_ACCOUNT_ID/uptimeflare_worker"
             terraform import cloudflare_pages_project.uptimeflare "$TF_VAR_CLOUDFLARE_ACCOUNT_ID/uptimeflare"
           else
-            echo "KV namespace not found, first-time setup."
+            echo "Legacy KV namespace not found, first-time setup."
           fi
-
           terraform apply -auto-approve -input=false
+          echo "UPTIMEFLARE_D1_DATABASE_ID=$(terraform output -raw uptimeflare_d1_database_id)" >> "$GITHUB_ENV"
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           TF_VAR_CLOUDFLARE_ACCOUNT_ID: ${{ steps.fetch_account_id.outputs.account_id }}
 
-      # Terraform Cloudflare provider 4.x doesn't support durable objects, provider 5.x has unresolved issues blocking the deployment. (cloudflare/terraform-provider-cloudflare#5412)
-      # So I have to manually add durable objects bindings here.
-      - name: Add durable objects bindings
+      - name: Apply D1 migrations
         run: |
-          # Get current bindings
-          CURRENT_BINDINGS=$(curl --request GET --fail-with-body \
-               --url https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/scripts/uptimeflare_worker/settings \
-               --header 'Authorization: Bearer '$CLOUDFLARE_API_TOKEN \
-               --header 'Content-Type: application/json' | jq '.result.bindings' -jc)
-          CURRENT_BINDINGS="${CURRENT_BINDINGS:1:-1}"
-          echo "Current bindings: $CURRENT_BINDINGS"
-
-          # Try migration first (required for the new durable object class, ignore failures)
-          curl --request PATCH \
-               --url https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/scripts/uptimeflare_worker/settings \
-               --header 'Authorization: Bearer '$CLOUDFLARE_API_TOKEN \
-               -F 'settings={"bindings":[{"type":"durable_object_namespace","name":"REMOTE_CHECKER_DO","class_name":"RemoteChecker"},'$CURRENT_BINDINGS'],"migrations":{"new_sqlite_classes":["RemoteChecker"],"new_tag":"v1"}}'
-
-          # Actually add the binding
-          curl --request PATCH --fail-with-body \
-               --url https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/scripts/uptimeflare_worker/settings \
-               --header 'Authorization: Bearer '$CLOUDFLARE_API_TOKEN \
-               -F 'settings={"bindings":[{"type":"durable_object_namespace","name":"REMOTE_CHECKER_DO","class_name":"RemoteChecker"},'$CURRENT_BINDINGS']}'
-
-          # By the ways enable logs
-          curl --request PATCH \
-               --url https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/scripts/uptimeflare_worker/script-settings \
-               --header 'Authorization: Bearer '$CLOUDFLARE_API_TOKEN \
-               --header 'Content-Type: application/json' \
-               -d '{"observability":{"enabled":true}}'
+          node scripts/set-wrangler-d1-id.mjs "$UPTIMEFLARE_D1_DATABASE_ID"
+          npx wrangler d1 migrations apply uptimeflare_state --remote --config wrangler.jsonc
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ steps.fetch_account_id.outputs.account_id }}
 
-      # Currently Terraform Cloudflare provider doesn't support direct upload, use wrangler to upload instead.
-      - name: Deploy pages (OpenNext)
+      - name: Build and deploy app (OpenNext)
         run: |
+          npx opennextjs-cloudflare build
           npx opennextjs-cloudflare deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}

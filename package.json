@@ -8,8 +8,9 @@
     "start:dev": "next dev",
     "start:preview": "npm run preview",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
-    "deploy:cf": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
-    "upload:cf": "opennextjs-cloudflare build && opennextjs-cloudflare upload",
+    "configure:d1": "node scripts/set-wrangler-d1-id.mjs \"$UPTIMEFLARE_D1_DATABASE_ID\"",
+    "deploy:cf": "npm run configure:d1 && opennextjs-cloudflare build && opennextjs-cloudflare deploy",
+    "upload:cf": "npm run configure:d1 && opennextjs-cloudflare build && opennextjs-cloudflare upload",
     "build:pkg": "next build",
     "start:prod": "next start",
     "fmt:lint": "next lint",
@@ -17,8 +18,8 @@
     "deps:install": "npm install --verbose --no-fund --no-audit",
     "deps:ci": "npm ci --verbose --no-fund --no-audit",
     "deps:update": "npm-check-updates -u && npm run deps:install",
-    "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
-    "upload": "opennextjs-cloudflare build && opennextjs-cloudflare upload"
+    "deploy": "npm run configure:d1 && opennextjs-cloudflare build && opennextjs-cloudflare deploy",
+    "upload": "npm run configure:d1 && opennextjs-cloudflare build && opennextjs-cloudflare upload"
   },
   "dependencies": {
     "@cloudflare/workers-types": "^5.20261114.1",

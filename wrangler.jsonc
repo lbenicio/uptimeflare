@@ -19,8 +19,17 @@
 			"service": "uptimeflare"
 		}
 	],
+	"d1_databases": [
+		{
+			"binding": "UPTIMEFLARE_DB",
+			"database_name": "uptimeflare_state",
+			// Replaced from the Terraform output in the deployment workflow.
+			"database_id": "00000000-0000-0000-0000-000000000000",
+			"migrations_dir": "worker/migrations"
+		}
+	],
 	"r2_buckets": [
-		// Use R2 incremental cache
+		// Use R2 only for OpenNext's incremental cache; monitor status is stored in D1.
 		// See https://opennext.js.org/cloudflare/caching
 		{
 			"binding": "NEXT_INC_CACHE_R2_BUCKET",

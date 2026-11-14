@@ -2,7 +2,7 @@ import Head from 'next/head'
 
 import { Inter } from 'next/font/google'
 import { MonitorState, MonitorTarget } from '@/types/config'
-import { KVNamespace } from '@cloudflare/workers-types'
+import type { GetServerSidePropsContext } from 'next'
 import { maintenances, pageConfig, workerConfig } from '@/uptime.config'
 import OverallStatus from '@/components/OverallStatus'
 import Header from '@/components/Header'
@@ -12,6 +12,7 @@ import MonitorDetail from '@/components/MonitorDetail'
 import mock from '@/mock/state.json'
 import { getCloudflareContext } from '@opennextjs/cloudflare'
 import classes from '@/styles/Home.module.css'
+import { readMonitorState } from '@/lib/monitor-state'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -19,13 +20,13 @@ export default function Home({
   state: stateStr,
   monitors,
 }: {
-  state: string
+  state: string | null
   monitors: MonitorTarget[]
   tooltip?: string
   statusPageLink?: string
 }) {
   let state
-  if (stateStr !== undefined) {
+  if (stateStr) {
     state = JSON.parse(stateStr) as MonitorState
   }
 
@@ -56,7 +57,7 @@ export default function Home({
         {state == undefined ? (
           <Center className={classes.errorState}>
             <Text fw={700}>
-              Monitor State is not defined now, please check your worker&apos;s status and KV
+              Monitor State is not defined now, please check your worker&apos;s status and D1
               binding!
             </Text>
           </Center>
@@ -77,19 +78,17 @@ export default function Home({
   )
 }
 
-export async function getServerSideProps() {
-  let state: MonitorState
+export async function getServerSideProps({ res }: GetServerSidePropsContext) {
+  res.setHeader('Cache-Control', 'no-store, max-age=0')
+  let state: MonitorState | null
 
   if (process.env.NODE_ENV !== 'development') {
     const ctx = await getCloudflareContext({ async: true })
-    const { UPTIMEFLARE_STATE } = ctx.env as unknown as {
-      UPTIMEFLARE_STATE: KVNamespace
-    }
+    const { UPTIMEFLARE_DB } = ctx.env as unknown as { UPTIMEFLARE_DB: D1Database }
 
-    // Read state as string from KV, to avoid hitting server-side cpu time limit
-    state = (await UPTIMEFLARE_STATE?.get('state')) as unknown as MonitorState
+    state = await readMonitorState(UPTIMEFLARE_DB)
   } else {
-    state = JSON.stringify(mock) as unknown as MonitorState
+    state = mock as MonitorState
   }
 
   // Only present these values to client
@@ -106,5 +105,7 @@ export async function getServerSideProps() {
     }
   })
 
-  return { props: { state, monitors } }
+  return {
+    props: { state: state ? JSON.stringify(state) : null, monitors },
+  }
 }

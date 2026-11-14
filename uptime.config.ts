@@ -19,19 +19,21 @@ const pageConfig: PageConfig = {
 }
 
 const workerConfig: WorkerConfig = {
-  // Write KV at most every 3 minutes unless the status changed
-  kvWriteCooldownMinutes: 3,
+  // Write D1 at most every 3 minutes unless the status changed
+  stateWriteCooldownMinutes: 3,
   // Enable HTTP Basic auth for status page & API by uncommenting the line below, format `<USERNAME>:<PASSWORD>`
   // passwordProtection: 'username:password',
   // Define all your monitors here
   monitors: [
+    // Separate TLS checks below report certificates that expire within 30 days.
+    // Add more with method: 'SSL_CERT' and set certificateExpiryWarningDays as needed.
     // Example HTTP Monitor
     {
       // `id` should be unique, history will be kept if the `id` remains constant
       id: 'homepage',
       // `name` is used at status page and callback message
       name: 'About me',
-      // `method` should be a valid HTTP Method
+      // `method` should be an HTTP method, TCP_PING, or SSL_CERT
       method: 'GET',
       // `target` is a valid URL
       target: 'https://lbenicio.dev',
@@ -170,6 +172,21 @@ const workerConfig: WorkerConfig = {
         'User-Agent': 'Uptimeflare',
       },
     },
+    ...[
+      { id: 'homepage', name: 'About me', target: 'https://lbenicio.dev' },
+      { id: 'blog', name: 'Blog', target: 'https://blog.lbenicio.dev' },
+      { id: 'newsletter', name: 'Newsletter', target: 'https://newsletter.lbenicio.dev' },
+      { id: 'pgp', name: 'PGP', target: 'https://pgp.lbenicio.dev' },
+      { id: 'contact', name: 'Contact', target: 'https://contact.lbenicio.dev' },
+      { id: 'socials', name: 'Socials', target: 'https://socials.lbenicio.dev' },
+    ].map((monitor) => ({
+      id: `${monitor.id}-certificate`,
+      name: `${monitor.name} TLS certificate`,
+      method: 'SSL_CERT',
+      target: monitor.target,
+      certificateExpiryWarningDays: 30,
+      hideLatencyChart: true,
+    })),
   ],
   notification: {},
   callbacks: {
