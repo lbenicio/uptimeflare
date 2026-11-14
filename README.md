@@ -43,27 +43,3 @@ npm i -D @cloudflare/next-on-pages --legacy-peer-deps
 ```
 
 Note: this helper currently specifies Next up to 15.x as a peer. When using Next 16, install it with `--legacy-peer-deps`. The project will skip dev bindings if the helper is not installed (see `next.config.js`).
-
-
-## New features (TODOs)
-
-- [x] Specify region for monitors
-- [x] TCP `opened` promise
-- [x] Use apprise to support various notification channels
-- [x] ~~Telegram example~~
-- [x] ~~[Bark](https://bark.day.app) example~~
-- [x] ~~Email notification via Cloudflare Email Workers~~
-- [x] Improve docs by providing simple examples
-- [x] Notification grace period
-- [ ] SSL certificate checks
-- [x] ~~Self-host Dockerfile~~
-- [x] Incident history
-- [x] Improve `checkLocationWorkerRoute` and fix possible `proxy failed`
-- [x] Groups
-- [x] Remove old incidents
-- [x] ~~Known issue~~: `fetch` doesn't support non-standard port (resolved after CF update)
-- [x] Compatibility date update
-- [x] Scheduled Maintenance
-- [ ] Update wiki/README and add docs for dev
-- [ ] Migration to Terraform Cloudflare provider version 5.x
-- [ ] Cloudflare D1 database
