@@ -28,11 +28,11 @@ resource "cloudflare_d1_database" "uptimeflare" {
 }
 
 resource "cloudflare_workers_script" "uptimeflare" {
-  account_id         = var.CLOUDFLARE_ACCOUNT_ID
-  script_name        = "uptimeflare_worker"
-  main_module        = "index.js"
-  content            = trimspace(file("worker/dist/index.js"))
-  compatibility_date = "2026-11-14"
+  account_id          = var.CLOUDFLARE_ACCOUNT_ID
+  script_name         = "uptimeflare_worker"
+  main_module         = "index.js"
+  content             = trimspace(file("worker/dist/index.js"))
+  compatibility_date  = "2026-11-14"
   compatibility_flags = ["nodejs_compat"]
   observability = {
     enabled = true
@@ -40,9 +40,9 @@ resource "cloudflare_workers_script" "uptimeflare" {
 
   bindings = [
     {
-      name        = "UPTIMEFLARE_DB"
-      type        = "d1"
-      id          = cloudflare_d1_database.uptimeflare.id
+      name = "UPTIMEFLARE_DB"
+      type = "d1"
+      id   = cloudflare_d1_database.uptimeflare.id
     },
     {
       name       = "REMOTE_CHECKER_DO"
@@ -63,24 +63,6 @@ resource "cloudflare_workers_cron_trigger" "uptimeflare_worker_cron" {
   schedules = [{
     cron = "* * * * *" # every minute; D1 writes are throttled by stateWriteCooldownMinutes
   }]
-}
-
-resource "cloudflare_pages_project" "uptimeflare" {
-  account_id        = var.CLOUDFLARE_ACCOUNT_ID
-  name              = "uptimeflare"
-  production_branch = "main"
-
-  deployment_configs = {
-    production = {
-      d1_databases = {
-        UPTIMEFLARE_DB = {
-          id = cloudflare_d1_database.uptimeflare.id
-        }
-      }
-      compatibility_date  = "2026-11-14"
-      compatibility_flags = ["nodejs_compat"]
-    }
-  }
 }
 
 output "uptimeflare_d1_database_id" {

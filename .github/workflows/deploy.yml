@@ -105,14 +105,6 @@ jobs:
             echo "Worker not found; Terraform will create it."
           fi
 
-          PAGES_PROJECT_EXISTS=$(curl --silent --show-error \
-               --url https://api.cloudflare.com/client/v4/accounts/$TF_VAR_CLOUDFLARE_ACCOUNT_ID/pages/projects/uptimeflare \
-               --header 'Authorization: Bearer '$CLOUDFLARE_API_TOKEN | jq -r '.success // false')
-          if [ "$PAGES_PROJECT_EXISTS" = "true" ]; then
-            terraform import cloudflare_pages_project.uptimeflare "$TF_VAR_CLOUDFLARE_ACCOUNT_ID/uptimeflare"
-          else
-            echo "Pages project not found; Terraform will create it."
-          fi
           terraform apply -auto-approve -input=false
           echo "UPTIMEFLARE_D1_DATABASE_ID=$(terraform output -raw uptimeflare_d1_database_id)" >> "$GITHUB_ENV"
         env:
