@@ -25,8 +25,7 @@ const workerConfig: WorkerConfig = {
   // passwordProtection: 'username:password',
   // Define all your monitors here
   monitors: [
-    // Separate TLS checks below report certificates that expire within 30 days.
-    // Add more with method: 'SSL_CERT' and set certificateExpiryWarningDays as needed.
+    // Certificate checks are attached to each HTTPS service and shown inline.
     // Example HTTP Monitor
     {
       // `id` should be unique, history will be kept if the `id` remains constant
@@ -37,6 +36,7 @@ const workerConfig: WorkerConfig = {
       method: 'GET',
       // `target` is a valid URL
       target: 'https://lbenicio.dev',
+      certificateExpiryWarningDays: 30,
       // [OPTIONAL] `tooltip` is ONLY used at status page to show a tooltip
       tooltip: 'My personal website homepage',
       // [OPTIONAL] `statusPageLink` is ONLY used for clickable link at status page
@@ -61,6 +61,7 @@ const workerConfig: WorkerConfig = {
       method: 'GET',
       // `target` is a valid URL
       target: 'https://blog.lbenicio.dev',
+      certificateExpiryWarningDays: 30,
       // [OPTIONAL] `tooltip` is ONLY used at status page to show a tooltip
       tooltip: 'My personal blog',
       // [OPTIONAL] `statusPageLink` is ONLY used for clickable link at status page
@@ -85,6 +86,7 @@ const workerConfig: WorkerConfig = {
       method: 'GET',
       // `target` is a valid URL
       target: 'https://newsletter.lbenicio.dev',
+      certificateExpiryWarningDays: 30,
       // [OPTIONAL] `tooltip` is ONLY used at status page to show a tooltip
       tooltip: 'Sign up for my personal newsletter',
       // [OPTIONAL] `statusPageLink` is ONLY used for clickable link at status page
@@ -109,6 +111,7 @@ const workerConfig: WorkerConfig = {
       method: 'GET',
       // `target` is a valid URL
       target: 'https://pgp.lbenicio.dev',
+      certificateExpiryWarningDays: 30,
       // [OPTIONAL] `tooltip` is ONLY used at status page to show a tooltip
       tooltip: 'Myt personal pgp key',
       // [OPTIONAL] `statusPageLink` is ONLY used for clickable link at status page
@@ -133,6 +136,7 @@ const workerConfig: WorkerConfig = {
       method: 'GET',
       // `target` is a valid URL
       target: 'https://socials.lbenicio.dev',
+      certificateExpiryWarningDays: 30,
       // [OPTIONAL] `tooltip` is ONLY used at status page to show a tooltip
       tooltip: 'My social networks links',
       // [OPTIONAL] `statusPageLink` is ONLY used for clickable link at status page
@@ -148,21 +152,6 @@ const workerConfig: WorkerConfig = {
         'User-Agent': 'Uptimeflare',
       },
     },
-    ...[
-      { id: 'homepage', name: 'About me', target: 'https://lbenicio.dev' },
-      { id: 'blog', name: 'Blog', target: 'https://blog.lbenicio.dev' },
-      { id: 'newsletter', name: 'Newsletter', target: 'https://newsletter.lbenicio.dev' },
-      { id: 'pgp', name: 'PGP', target: 'https://pgp.lbenicio.dev' },
-      { id: 'contact', name: 'Contact', target: 'https://contact.lbenicio.dev' },
-      { id: 'socials', name: 'Socials', target: 'https://socials.lbenicio.dev' },
-    ].map((monitor) => ({
-      id: `${monitor.id}-certificate`,
-      name: `${monitor.name} TLS certificate`,
-      method: 'SSL_CERT',
-      target: monitor.target,
-      certificateExpiryWarningDays: 30,
-      hideLatencyChart: true,
-    })),
   ],
   notification: {},
   callbacks: {
