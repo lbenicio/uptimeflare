@@ -24,8 +24,8 @@ export default function MonitorDetail({
         ? `TLS expires in ${certificate.daysRemaining} days`
         : certificate?.status === 'invalid'
           ? 'TLS certificate invalid'
-          : certificate?.status === 'error'
-            ? 'TLS check failed'
+          : certificate?.status === 'unavailable'
+            ? 'TLS check unavailable'
             : 'TLS check pending'
   const certificateStatus = certificate?.status ?? 'pending'
   const certificateMarker =
