@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "vercel-build": "next build",
     "build": "next build",
+    "vercel-build": "next build",
     "start:dev": "next dev",
     "start:preview": "npm run preview",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
@@ -16,7 +16,9 @@
     "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
     "deps:install": "npm install --verbose --no-fund --no-audit",
     "deps:ci": "npm ci --verbose --no-fund --no-audit",
-    "deps:update": "npm-check-updates -u && npm run deps:install"
+    "deps:update": "npm-check-updates -u && npm run deps:install",
+    "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
+    "upload": "opennextjs-cloudflare build && opennextjs-cloudflare upload"
   },
   "dependencies": {
     "@cloudflare/workers-types": "^5.20261114.1",
@@ -33,14 +35,18 @@
     "react-chartjs-2": "^5.3.1",
     "react-dom": "^19.3.1"
   },
+  "overrides": {
+    "glob": "^14.0.6",
+    "minimatch@^10.2.2": "^11.0.8"
+  },
   "devDependencies": {
     "@opennextjs/cloudflare": "^1.20.17",
     "@types/node": "^26",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^10",
-    "npm-check-updates": "^23.1.1",
     "eslint-config-next": "^16.4.6",
+    "npm-check-updates": "^23.1.1",
     "postcss": "^8.5.33",
     "postcss-preset-mantine": "^1.18.0",
     "postcss-simple-vars": "^7.0.1",
