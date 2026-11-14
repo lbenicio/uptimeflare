@@ -34,7 +34,7 @@
     "react-dom": "^19.2.7"
   },
   "devDependencies": {
-    "@opennextjs/cloudflare": "^1.19.11",
+    "@opennextjs/cloudflare": "^1.20.2",
     "@types/node": "^26",
     "@types/react": "^19",
     "@types/react-dom": "^19",
