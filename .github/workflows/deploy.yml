@@ -73,7 +73,7 @@ jobs:
       - name: Build worker
         run: |
           cd worker
-          npx wrangler deploy src/index.ts --outdir dist --dry-run
+          npx wrangler deploy src/index.ts --config wrangler.toml --outdir dist --dry-run
 
       - name: Deploy using Terraform
         # As we don't save terraform state somewhere, we need to import the existing resources
