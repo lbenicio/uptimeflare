@@ -126,7 +126,7 @@ describe('Cloudflare edge certificate fallback', () => {
         ],
       })
     })
-    const result = await getStatus(monitor, { apiToken: 'test-token' })
+    const result = await getStatus({ ...monitor, timeout: 100, certificateExpiryWarningDays: null }, { apiToken: 'test-token' })
     assert.equal(result.certificate.status, 'warning')
     assert.equal(result.certificate.daysRemaining, 10)
   })
