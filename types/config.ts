@@ -74,7 +74,7 @@ export type Callbacks = {
 }
 
 export type CertificateCheck = {
-  status: 'valid' | 'warning' | 'invalid' | 'error'
+  status: 'valid' | 'warning' | 'invalid' | 'unavailable'
   checkedAt: number
   expiresAt?: number
   daysRemaining?: number
