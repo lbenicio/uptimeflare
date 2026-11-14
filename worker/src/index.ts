@@ -3,11 +3,10 @@ import { formatStatusChangeNotification, getWorkerLocation, notifyWithApprise } 
 import { MonitorState, MonitorTarget } from '../../types/config'
 import { getStatus } from './monitor'
 import { DurableObject } from 'cloudflare:workers'
-import { readOrMigrateMonitorState, writeMonitorState } from '../../lib/monitor-state'
+import { readOrCreateMonitorState, writeMonitorState } from '../../lib/monitor-state'
 
 export interface Env {
   UPTIMEFLARE_DB: D1Database
-  UPTIMEFLARE_STATE_LEGACY?: KVNamespace
   REMOTE_CHECKER_DO: DurableObjectNamespace<RemoteChecker>
 }
 
@@ -70,11 +69,8 @@ const Worker = {
       }
     }
 
-    // Load status from D1. The old KV value is read once as a migration fallback.
-    let state: MonitorState = await readOrMigrateMonitorState(
-      env.UPTIMEFLARE_DB,
-      env.UPTIMEFLARE_STATE_LEGACY
-    )
+    // Load status from D1, initializing an empty state for a new installation.
+    let state: MonitorState = await readOrCreateMonitorState(env.UPTIMEFLARE_DB)
     const monitorStateMissing = workerConfig.monitors.some(
       (monitor) => !state.incident[monitor.id] || !state.latency[monitor.id]
     )

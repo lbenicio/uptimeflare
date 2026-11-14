@@ -22,12 +22,6 @@ variable "CREATE_REMOTE_CHECKER_NAMESPACE" {
   default     = false
 }
 
-# Temporary read-only migration source for the old `state` KV value.
-resource "cloudflare_workers_kv_namespace" "uptimeflare_kv" {
-  account_id = var.CLOUDFLARE_ACCOUNT_ID
-  title      = "uptimeflare_kv"
-}
-
 resource "cloudflare_d1_database" "uptimeflare" {
   account_id = var.CLOUDFLARE_ACCOUNT_ID
   name       = "uptimeflare_state"
@@ -49,12 +43,6 @@ resource "cloudflare_workers_script" "uptimeflare" {
       name        = "UPTIMEFLARE_DB"
       type        = "d1"
       id          = cloudflare_d1_database.uptimeflare.id
-    },
-    {
-      # Read only while migrating the previous status value into D1.
-      name        = "UPTIMEFLARE_STATE_LEGACY"
-      type        = "kv_namespace"
-      namespace_id = cloudflare_workers_kv_namespace.uptimeflare_kv.id
     },
     {
       name       = "REMOTE_CHECKER_DO"

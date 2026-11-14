@@ -22,18 +22,9 @@ export async function readMonitorState(db: D1Database): Promise<MonitorState | n
   return row ? (JSON.parse(row.state_json) as MonitorState) : null
 }
 
-export async function readOrMigrateMonitorState(
-  db: D1Database,
-  legacyState?: KVNamespace
-): Promise<MonitorState> {
+export async function readOrCreateMonitorState(db: D1Database): Promise<MonitorState> {
   const storedState = await readMonitorState(db)
   if (storedState) return storedState
-
-  const legacyStateJson = await legacyState?.get('state')
-  if (legacyStateJson) {
-    return JSON.parse(legacyStateJson) as MonitorState
-  }
-
   return createInitialMonitorState()
 }
 
