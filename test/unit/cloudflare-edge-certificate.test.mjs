@@ -76,7 +76,9 @@ async function edgeCheck(t, scenario, target = monitor, config = token) {
 
 describe('Cloudflare edge certificate fallback', () => {
   it('handles Cloudflare API errors and incomplete responses', async (t) => {
-    for (const scenario of [
+    let scenario = ''
+    t.mock.method(globalThis, 'fetch', async (url) => apiResponse(scenario, url))
+    for (const caseName of [
       'zone-http',
       'zone-errors',
       'zone-errors-empty',
@@ -87,8 +89,9 @@ describe('Cloudflare edge certificate fallback', () => {
       'missing-result',
       'invalid-expiry',
     ]) {
-      const result = await edgeCheck(t, scenario)
-      assert.equal(result.certificate.status, 'unavailable', scenario)
+      scenario = caseName
+      const result = await getStatus(monitor, token)
+      assert.equal(result.certificate.status, 'unavailable', caseName)
     }
   })
 
