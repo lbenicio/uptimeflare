@@ -1,17 +1,19 @@
 import { MaintenanceConfig, MonitorTarget } from '@/types/config'
-import { Center, Container, Title } from '@mantine/core'
-import { IconCircleCheck, IconAlertCircle } from '@tabler/icons-react'
+import { Container, Text } from '@mantine/core'
+import { IconAlertCircle, IconAlertTriangle, IconCircleCheck } from '@tabler/icons-react'
 import { useEffect, useState } from 'react'
 import MaintenanceAlert from './MaintenanceAlert'
-import { pageConfig } from '@/uptime.config'
+import classes from '@/styles/OverallStatus.module.css'
 
 function useWindowVisibility() {
   const [isVisible, setIsVisible] = useState(true)
+
   useEffect(() => {
     const handleVisibilityChange = () => setIsVisible(document.visibilityState === 'visible')
     document.addEventListener('visibilitychange', handleVisibilityChange)
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
   }, [])
+
   return isVisible
 }
 
@@ -24,69 +26,96 @@ export default function OverallStatus({
   maintenances: MaintenanceConfig[]
   monitors: MonitorTarget[]
 }) {
-  let group = pageConfig.group
-  let groupedMonitor = (group && Object.keys(group).length > 0) || false
-
-  let statusString = ''
-  let icon = <IconAlertCircle style={{ width: 64, height: 64, color: '#b91c1c' }} />
-  if (state.overallUp === 0 && state.overallDown === 0) {
-    statusString = 'No data yet'
-  } else if (state.overallUp === 0) {
-    statusString = 'All systems not operational'
-  } else if (state.overallDown === 0) {
-    statusString = 'All systems operational'
-    icon = <IconCircleCheck style={{ width: 64, height: 64, color: '#059669' }} />
-  } else {
-    statusString = `Some systems not operational (${state.overallDown} out of ${
-      state.overallUp + state.overallDown
-    })`
-  }
-
-  const [openTime] = useState(Math.round(Date.now() / 1000))
-  const [currentTime, setCurrentTime] = useState(Math.round(Date.now() / 1000))
+  const [currentTime, setCurrentTime] = useState(() => Math.round(Date.now() / 1000))
   const isWindowVisible = useWindowVisibility()
+  const total = state.overallUp + state.overallDown
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      if (!isWindowVisible) return
-      // if (currentTime - state.lastUpdate > 300 && currentTime - openTime > 30) {
-      //   window.location.reload()
-      // }
-      setCurrentTime(Math.round(Date.now() / 1000))
-    }, 1000)
+    if (!isWindowVisible) return
+    const interval = setInterval(() => setCurrentTime(Math.round(Date.now() / 1000)), 10_000)
     return () => clearInterval(interval)
-  })
+  }, [isWindowVisible])
+
+  let status: 'up' | 'down' | 'partial' | 'unknown' = 'unknown'
+  let statusString = 'No data yet'
+  let statusDescription = 'Status data will appear here after the first monitor check.'
+  let StatusIcon = IconAlertCircle
+
+  if (total > 0 && state.overallDown === 0) {
+    status = 'up'
+    statusString = 'All systems operational'
+    statusDescription = 'All monitored services are responding normally.'
+    StatusIcon = IconCircleCheck
+  } else if (state.overallUp === 0 && state.overallDown > 0) {
+    status = 'down'
+    statusString = 'Systems are experiencing issues'
+    statusDescription = 'One or more services are currently unavailable.'
+  } else if (state.overallDown > 0) {
+    status = 'partial'
+    statusString = 'Some systems are experiencing issues'
+    statusDescription = `${state.overallDown} of ${total} monitored services need attention.`
+    StatusIcon = IconAlertTriangle
+  }
 
   const now = new Date()
-  let filteredMaintenances: (Omit<MaintenanceConfig, 'monitors'> & {
+  const filteredMaintenances: (Omit<MaintenanceConfig, 'monitors'> & {
     monitors?: MonitorTarget[]
   })[] = maintenances
-    .filter((m) => now >= new Date(m.start) && (!m.end || now <= new Date(m.end)))
+    .filter(
+      (maintenance) =>
+        now >= new Date(maintenance.start) && (!maintenance.end || now <= new Date(maintenance.end))
+    )
     .map((maintenance) => ({
       ...maintenance,
-      monitors: maintenance.monitors?.map(
-        (monitorId) => monitors.find((mon) => monitorId === mon.id)!
-      ),
+      monitors: maintenance.monitors
+        ?.map((monitorId) => monitors.find((monitor) => monitor.id === monitorId)!)
+        .filter(Boolean),
     }))
 
-  return (
-    <Container size="md" mt="xl">
-      <Center>{icon}</Center>
-      <Title mt="xs" style={{ textAlign: 'center' }} order={1}>
-        {statusString}
-      </Title>
-      <Title mt="sm" style={{ textAlign: 'center', color: '#70778c' }} order={5}>
-        Last updated on:{' '}
-        {`${new Date(state.lastUpdate * 1000).toLocaleString()} (${
-          currentTime - state.lastUpdate
-        } sec ago)`}
-      </Title>
+  const checkedAt = new Date(state.lastUpdate * 1000)
+  const secondsAgo = Math.max(0, currentTime - state.lastUpdate)
+  const ago =
+    secondsAgo < 60
+      ? `${secondsAgo}s ago`
+      : secondsAgo < 3600
+        ? `${Math.floor(secondsAgo / 60)}m ago`
+        : `${Math.floor(secondsAgo / 3600)}h ago`
 
-      {filteredMaintenances.map((maintenance, idx) => (
+  return (
+    <Container fluid className={classes.container}>
+      <section className={classes.statusCard} data-status={status} aria-live="polite">
+        <div className={classes.statusHeading}>
+          <div className={classes.statusCopy}>
+            <Text className={classes.eyebrow}>CURRENT STATUS</Text>
+            <h1 className={classes.title}>{statusString}</h1>
+            <p className={classes.description}>{statusDescription}</p>
+          </div>
+          <div className={classes.statusIcon} aria-hidden="true">
+            <StatusIcon size={27} stroke={1.9} />
+          </div>
+        </div>
+
+        <div className={classes.statusMeta}>
+          <div className={classes.metric}>
+            <span className={classes.metricLabel}>Operational</span>
+            <span className={classes.metricValue}>{state.overallUp}</span>
+          </div>
+          <div className={classes.metric}>
+            <span className={classes.metricLabel}>Needs attention</span>
+            <span className={classes.metricValue}>{state.overallDown}</span>
+          </div>
+          <div className={`${classes.metric} ${classes.lastCheck}`}>
+            <span className={classes.metricLabel}>Last checked</span>
+            <span className={classes.metricValue}>{ago}</span>
+            <span className={classes.checkedAt}>{checkedAt.toLocaleString()}</span>
+          </div>
+        </div>
+      </section>
+
+      {filteredMaintenances.map((maintenance, index) => (
         <MaintenanceAlert
-          key={idx}
+          key={`${maintenance.title || 'maintenance'}-${index}`}
           maintenance={maintenance}
-          style={{ maxWidth: groupedMonitor ? '897px' : '865px' }}
         />
       ))}
     </Container>

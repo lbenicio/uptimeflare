@@ -1,0 +1,146 @@
+.container {
+  width: 100%;
+  padding: 0;
+}
+
+.statusCard {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface);
+  box-shadow: 0 12px 36px rgb(22 34 51 / 4%);
+}
+
+.statusHeading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 30px 32px 27px;
+}
+
+.statusCopy {
+  min-width: 0;
+}
+
+.eyebrow {
+  margin-bottom: 10px;
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+.title {
+  margin: 0;
+  color: var(--text);
+  font-size: clamp(24px, 4vw, 32px);
+  font-weight: 650;
+  letter-spacing: -0.045em;
+  line-height: 1.15;
+}
+
+.description {
+  margin: 9px 0 0;
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.statusIcon {
+  display: grid;
+  flex: 0 0 52px;
+  width: 52px;
+  height: 52px;
+  place-items: center;
+  border-radius: 15px;
+  background: var(--status-up-bg);
+  color: var(--status-up);
+}
+
+.statusCard[data-status='partial'] .statusIcon {
+  background: var(--status-warning-bg);
+  color: var(--status-warning);
+}
+
+.statusCard[data-status='down'] .statusIcon {
+  background: var(--status-down-bg);
+  color: var(--status-down);
+}
+
+.statusCard[data-status='unknown'] .statusIcon {
+  background: var(--surface-muted);
+  color: var(--text-muted);
+}
+
+.statusMeta {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.4fr;
+  border-top: 1px solid var(--line);
+  background: var(--surface-muted);
+}
+
+.metric {
+  display: flex;
+  min-height: 82px;
+  flex-direction: column;
+  justify-content: center;
+  padding: 14px 32px;
+  border-right: 1px solid var(--line);
+}
+
+.metric:last-child {
+  border-right: 0;
+}
+
+.metricLabel {
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.metricValue {
+  margin-top: 4px;
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+
+.checkedAt {
+  margin-top: 2px;
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+@media (max-width: 640px) {
+  .statusHeading {
+    gap: 12px;
+    padding: 24px 20px 22px;
+  }
+
+  .statusIcon {
+    flex-basis: 44px;
+    width: 44px;
+    height: 44px;
+    border-radius: 13px;
+  }
+
+  .statusMeta {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .metric {
+    min-height: 72px;
+    padding: 12px 20px;
+  }
+
+  .metric:nth-child(2) {
+    border-right: 0;
+  }
+
+  .lastCheck {
+    grid-column: 1 / -1;
+    border-top: 1px solid var(--line);
+  }
+}

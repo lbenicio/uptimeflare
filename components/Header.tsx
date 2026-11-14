@@ -11,8 +11,9 @@ export default function Header() {
         key={link.label}
         href={link.link}
         target="_blank"
+        rel="noreferrer"
         className={classes.link}
-        data-active={link.highlight}
+        data-active={link.highlight || undefined}
       >
         {link.label}
       </a>
@@ -20,31 +21,26 @@ export default function Header() {
   }
 
   return (
-    <header className={classes.header} style={{ paddingLeft: '1rem', paddingRight: '1rem' }}>
+    <header className={classes.header}>
       <Container fluid={true} className={classes.inner}>
         <div>
           <a
             href="https://github.com/lbenicio/UptimeFlare"
             target="_blank"
-            style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}
+            rel="noreferrer"
+            className={classes.brand}
           >
-            <Image
-              src="/favicon.ico"
-              alt="Logo"
-              width={32}
-              height={32}
-              style={{ marginRight: '1rem' }}
-            />
-
-            <Text
-              size="xl"
-              span
-              fw={700}
-              variant="gradient"
-              gradient={{ from: 'blue', to: 'cyan', deg: 90 }}
-            >
-              lbenicio status page
-            </Text>
+            <span className={classes.logo}>
+              <Image src="/favicon.ico" alt="" width={23} height={23} />
+            </span>
+            <span>
+              <Text component="span" className={classes.brandName}>
+                {pageConfig.title || 'Status page'}
+              </Text>
+              <Text component="span" className={classes.brandCaption}>
+                Service health &amp; uptime
+              </Text>
+            </span>
           </a>
         </div>
 

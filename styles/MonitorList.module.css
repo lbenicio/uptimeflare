@@ -1,0 +1,146 @@
+.section {
+  margin-top: 36px;
+}
+
+.sectionHeading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 0 2px 16px;
+}
+
+.title {
+  margin: 0;
+  color: var(--text);
+  font-size: 17px;
+  font-weight: 650;
+  letter-spacing: -0.025em;
+}
+
+.description {
+  margin: 5px 0 0;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.count {
+  flex: 0 0 auto;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.serviceList,
+.group {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  background: var(--surface);
+}
+
+.service + .service {
+  border-top: 1px solid var(--line);
+}
+
+.service {
+  padding: 20px 22px 18px;
+}
+
+.accordion {
+  display: grid;
+  gap: 12px;
+}
+
+.accordion :global(.mantine-Accordion-item) {
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  background: var(--surface);
+}
+
+.accordion :global(.mantine-Accordion-control) {
+  min-height: 60px;
+  padding: 0 20px;
+}
+
+.accordion :global(.mantine-Accordion-control:hover) {
+  background: var(--surface-muted);
+}
+
+.accordion :global(.mantine-Accordion-label) {
+  padding: 15px 0;
+}
+
+.accordion :global(.mantine-Accordion-panel) {
+  border-top: 1px solid var(--line);
+}
+
+.accordion :global(.mantine-Accordion-content) {
+  padding: 0;
+}
+
+.groupHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+}
+
+.groupName {
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.groupStatus {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--status-up-muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.groupStatus[data-status='issue'] {
+  color: var(--status-warning-muted);
+}
+
+.statusDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.groupServices .service {
+  padding: 18px 20px 16px;
+}
+
+@media (max-width: 640px) {
+  .section {
+    margin-top: 28px;
+  }
+
+  .sectionHeading {
+    align-items: flex-start;
+  }
+
+  .service {
+    padding: 17px 16px 15px;
+  }
+
+  .groupServices .service {
+    padding: 16px 15px 14px;
+  }
+
+  .groupHeading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 5px;
+  }
+}

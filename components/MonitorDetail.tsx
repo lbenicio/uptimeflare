@@ -1,10 +1,11 @@
 import { Text, Tooltip } from '@mantine/core'
-import { MonitorState, MonitorTarget } from '@/types/config'
 import { IconAlertCircle, IconAlertTriangle, IconCircleCheck } from '@tabler/icons-react'
+import { MonitorState, MonitorTarget } from '@/types/config'
 import DetailChart from './DetailChart'
 import DetailBar from './DetailBar'
 import { getColor } from '@/util/color'
 import { maintenances } from '@/uptime.config'
+import classes from '@/styles/MonitorDetail.module.css'
 
 export default function MonitorDetail({
   monitor,
@@ -13,90 +14,81 @@ export default function MonitorDetail({
   monitor: MonitorTarget
   state: MonitorState
 }) {
-  if (!state.latency[monitor.id])
+  const incidents = state.incident[monitor.id] ?? []
+  const latency = state.latency[monitor.id]
+
+  if (!latency || incidents.length === 0) {
     return (
-      <>
-        <Text mt="sm" fw={700}>
-          {monitor.name}
+      <div className={classes.emptyState}>
+        <Text className={classes.monitorName}>{monitor.name}</Text>
+        <Text className={classes.noData}>
+          No monitor history is available yet. Check that your worker has deployed the latest config.
         </Text>
-        <Text mt="sm" fw={700}>
-          No data available, please make sure you have deployed your workers with latest config and
-          check your worker status!
-        </Text>
-      </>
+      </div>
     )
-
-  let statusIcon =
-    state.incident[monitor.id].slice(-1)[0].end === undefined ? (
-      <IconAlertCircle
-        style={{ width: '1.25em', height: '1.25em', color: '#b91c1c', marginRight: '3px' }}
-      />
-    ) : (
-      <IconCircleCheck
-        style={{ width: '1.25em', height: '1.25em', color: '#059669', marginRight: '3px' }}
-      />
-    )
-
-  // Hide real status icon if monitor is in maintenance
-  const now = new Date()
-  const hasMaintenance = maintenances
-    .filter((m) => now >= new Date(m.start) && (!m.end || now <= new Date(m.end)))
-    .find((maintenance) => maintenance.monitors?.includes(monitor.id))
-  if (hasMaintenance)
-    statusIcon = (
-      <IconAlertTriangle
-        style={{
-          width: '1.25em',
-          height: '1.25em',
-          color: '#fab005',
-          marginRight: '3px',
-        }}
-      />
-    )
-
-  let totalTime = Date.now() / 1000 - state.incident[monitor.id][0].start[0]
-  let downTime = 0
-  for (let incident of state.incident[monitor.id]) {
-    downTime += (incident.end ?? Date.now() / 1000) - incident.start[0]
   }
 
-  const uptimePercent = (((totalTime - downTime) / totalTime) * 100).toPrecision(4)
+  const latestIncident = incidents.at(-1)!
+  let status: 'up' | 'down' | 'maintenance' = latestIncident.end === undefined ? 'down' : 'up'
+  const now = new Date()
+  const hasMaintenance = maintenances.some(
+    (maintenance) =>
+      now >= new Date(maintenance.start) &&
+      (!maintenance.end || now <= new Date(maintenance.end)) &&
+      maintenance.monitors?.includes(monitor.id)
+  )
+  if (hasMaintenance) status = 'maintenance'
 
-  // Conditionally render monitor name with or without hyperlink based on monitor.url presence
-  const monitorNameElement = (
-    <Text mt="sm" fw={700} style={{ display: 'inline-flex', alignItems: 'center' }}>
+  const StatusIcon =
+    status === 'down'
+      ? IconAlertCircle
+      : status === 'maintenance'
+        ? IconAlertTriangle
+        : IconCircleCheck
+  const totalTime = Math.max(1, Date.now() / 1000 - incidents[0].start[0])
+  const downTime = incidents.reduce(
+    (total, incident) => total + (incident.end ?? Date.now() / 1000) - incident.start[0],
+    0
+  )
+  const uptimePercent = Math.max(0, Math.min(100, ((totalTime - downTime) / totalTime) * 100))
+  const formattedUptime = uptimePercent.toFixed(2)
+
+  const monitorName = (
+    <Text component="span" className={classes.monitorName}>
+      <StatusIcon
+        className={classes.statusIcon}
+        data-status={status}
+        size={17}
+        stroke={2}
+        aria-hidden="true"
+      />
       {monitor.statusPageLink ? (
         <a
           href={monitor.statusPageLink}
           target="_blank"
-          style={{ display: 'inline-flex', alignItems: 'center', color: 'inherit' }}
+          rel="noreferrer"
+          className={classes.monitorLink}
         >
-          {statusIcon} {monitor.name}
+          {monitor.name}
         </a>
       ) : (
-        <>
-          {statusIcon} {monitor.name}
-        </>
+        <span>{monitor.name}</span>
       )}
     </Text>
   )
 
   return (
-    <>
-      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-        {monitor.tooltip ? (
-          <Tooltip label={monitor.tooltip}>{monitorNameElement}</Tooltip>
-        ) : (
-          monitorNameElement
-        )}
-
-        <Text mt="sm" fw={700} style={{ display: 'inline', color: getColor(uptimePercent, true) }}>
-          Overall: {uptimePercent}%
-        </Text>
+    <div className={classes.monitor}>
+      <div className={classes.monitorHeader}>
+        {monitor.tooltip ? <Tooltip label={monitor.tooltip}>{monitorName}</Tooltip> : monitorName}
+        <div className={classes.uptime} style={{ color: getColor(formattedUptime, true) }}>
+          <span className={classes.uptimeLabel}>90-day uptime</span>
+          <span>{formattedUptime}%</span>
+        </div>
       </div>
 
       <DetailBar monitor={monitor} state={state} />
       {!monitor.hideLatencyChart && <DetailChart monitor={monitor} state={state} />}
-    </>
+    </div>
   )
 }

@@ -7,10 +7,11 @@ import { maintenances, pageConfig, workerConfig } from '@/uptime.config'
 import OverallStatus from '@/components/OverallStatus'
 import Header from '@/components/Header'
 import MonitorList from '@/components/MonitorList'
-import { Center, Divider, Text } from '@mantine/core'
+import { Center, Text } from '@mantine/core'
 import MonitorDetail from '@/components/MonitorDetail'
 import mock from '@/mock/state.json'
 import { getCloudflareContext } from '@opennextjs/cloudflare'
+import classes from '@/styles/Home.module.css'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -36,7 +37,7 @@ export default function Home({
       return <Text fw={700}>Monitor with id {monitorId} not found!</Text>
     }
     return (
-      <div style={{ maxWidth: '810px' }}>
+      <div className={classes.embeddedView}>
         <MonitorDetail monitor={monitor} state={state} />
       </div>
     )
@@ -49,46 +50,37 @@ export default function Home({
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <main className={inter.className}>
+      <main className={`${inter.className} ${classes.page}`}>
         <Header />
 
         {state == undefined ? (
-          <Center>
+          <Center className={classes.errorState}>
             <Text fw={700}>
               Monitor State is not defined now, please check your worker&apos;s status and KV
               binding!
             </Text>
           </Center>
         ) : (
-          <div>
+          <div className={classes.content}>
             <OverallStatus state={state} monitors={monitors} maintenances={maintenances} />
             <MonitorList monitors={monitors} state={state} />
           </div>
         )}
 
-        <Divider mt="5rem" mb="2rem" />
-        <Text
-          size="xs"
-          mt="xs"
-          pb="1rem"
-          style={{
-            textAlign: 'center',
-          }}
-        >
-          Open-source monitoring and status page powered by{' '}
-          <a href="https://github.com/lbenicio/UptimeFlare" target="_blank">
-            Uptimeflare
+        <footer className={classes.footer}>
+          <span>Powered by</span>{' '}
+          <a href="https://github.com/lyc8503/UptimeFlare" target="_blank" rel="noreferrer">
+            UptimeFlare
           </a>{' '}
-          and{' '}
-          <a href="https://www.cloudflare.com/" target="_blank">
+          <span>and</span>{' '}
+          <a href="https://www.cloudflare.com/" target="_blank" rel="noreferrer">
             Cloudflare
           </a>
-          , made by{' '}
-          <a href="https://github.com/lbenicio" target="_blank">
-            lbenicio
+          <span className={classes.footerDivider}>·</span>
+          <a href="https://github.com/lbenicio" target="_blank" rel="noreferrer">
+            Made by lbenicio
           </a>
-          .
-        </Text>
+        </footer>
       </main>
     </>
   )

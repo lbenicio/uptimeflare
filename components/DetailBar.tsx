@@ -1,8 +1,9 @@
 import { MonitorState, MonitorTarget } from '@/types/config'
-import { getColor } from '@/util/color'
-import { Box, Tooltip, Modal } from '@mantine/core'
-import { useResizeObserver } from '@mantine/hooks'
+import { Modal, Tooltip } from '@mantine/core'
 import { useState } from 'react'
+import { getColor } from '@/util/color'
+import classes from '@/styles/DetailBar.module.css'
+
 const moment = require('moment')
 require('moment-precise-range-plugin')
 
@@ -13,46 +14,40 @@ export default function DetailBar({
   monitor: MonitorTarget
   state: MonitorState
 }) {
-  const [barRef, barRect] = useResizeObserver()
   const [modalOpened, setModalOpened] = useState(false)
   const [modalTitle, setModalTitle] = useState('')
-  const [modelContent, setModelContent] = useState(<div />)
-
-  const overlapLen = (x1: number, x2: number, y1: number, y2: number) => {
-    return Math.max(0, Math.min(x2, y2) - Math.max(x1, y1))
-  }
-
-  const uptimePercentBars = []
-
+  const [modalContent, setModalContent] = useState(<div />)
+  const incidents = state.incident[monitor.id] ?? []
   const currentTime = Math.round(Date.now() / 1000)
-  const montiorStartTime = state.incident[monitor.id][0].start[0]
+  const monitorStartTime = incidents[0]?.start[0] ?? currentTime
+
+  const overlapLen = (x1: number, x2: number, y1: number, y2: number) =>
+    Math.max(0, Math.min(x2, y2) - Math.max(x1, y1))
 
   const todayStart = new Date()
   todayStart.setHours(0, 0, 0, 0)
-  const uptimePercentBarsWidth = self.innerWidth / 90
+  const bars = []
 
-  for (let i = 89; i >= 0; i--) {
-    const dayStart = Math.round(todayStart.getTime() / 1000) - i * 86400
+  for (let index = 89; index >= 0; index--) {
+    const dayStart = Math.round(todayStart.getTime() / 1000) - index * 86400
     const dayEnd = dayStart + 86400
-
-    const dayMonitorTime = overlapLen(dayStart, dayEnd, montiorStartTime, currentTime)
+    const dayMonitorTime = overlapLen(dayStart, dayEnd, monitorStartTime, currentTime)
     let dayDownTime = 0
+    const incidentReasons: string[] = []
 
-    let incidentReasons: string[] = []
-
-    for (let incident of state.incident[monitor.id]) {
+    for (const incident of incidents) {
       const incidentStart = incident.start[0]
       const incidentEnd = incident.end ?? currentTime
-
       const overlap = overlapLen(dayStart, dayEnd, incidentStart, incidentEnd)
       dayDownTime += overlap
 
-      // Incident history for the day
       if (overlap > 0) {
-        for (let i = 0; i < incident.error.length; i++) {
-          let partStart = incident.start[i]
+        for (let errorIndex = 0; errorIndex < incident.error.length; errorIndex++) {
+          let partStart = incident.start[errorIndex]
           let partEnd =
-            i === incident.error.length - 1 ? incident.end ?? currentTime : incident.start[i + 1]
+            errorIndex === incident.error.length - 1
+              ? incident.end ?? currentTime
+              : incident.start[errorIndex + 1]
           partStart = Math.max(partStart, dayStart)
           partEnd = Math.min(partEnd, dayEnd)
 
@@ -65,58 +60,58 @@ export default function DetailBar({
               hour: '2-digit',
               minute: '2-digit',
             })
-            incidentReasons.push(`[${startStr}-${endStr}] ${incident.error[i]}`)
+            incidentReasons.push(`[${startStr}–${endStr}] ${incident.error[errorIndex]}`)
           }
         }
       }
     }
 
-    const dayPercent = (((dayMonitorTime - dayDownTime) / dayMonitorTime) * 100).toPrecision(4)
+    const dayPercent =
+      dayMonitorTime > 0 ? ((dayMonitorTime - dayDownTime) / dayMonitorTime) * 100 : NaN
+    const date = new Date(dayStart * 1000)
+    const dateLabel = date.toLocaleDateString()
+    const hasIncidents = dayDownTime > 0
 
-    uptimePercentBars.push(
+    bars.push(
       <Tooltip
         multiline
-        key={i}
-        events={{ hover: true, focus: false, touch: true }}
+        key={index}
+        events={{ hover: true, focus: true, touch: true }}
         label={
-          Number.isNaN(Number(dayPercent)) ? (
-            'No Data'
+          Number.isNaN(dayPercent) ? (
+            `No data at ${dateLabel}`
           ) : (
             <>
-              <div>{dayPercent + '% at ' + new Date(dayStart * 1000).toLocaleDateString()}</div>
-              {dayDownTime > 0 && (
-                <div>{`Down for ${moment.preciseDiff(
-                  moment(0),
-                  moment(dayDownTime * 1000)
-                )} (click for detail)`}</div>
+              <div>
+                {dayPercent.toFixed(2)}% on {dateLabel}
+              </div>
+              {hasIncidents && (
+                <div>
+                  Down for {moment.preciseDiff(moment(0), moment(dayDownTime * 1000))} · click for
+                  details
+                </div>
               )}
             </>
           )
         }
       >
-        <div
-          style={{
-            height: '20px',
-            width: `${uptimePercentBarsWidth}px`,
-            background: getColor(dayPercent, false),
-            borderRadius: '2px',
-            marginLeft: '1px',
-            marginRight: '1px',
-          }}
+        <button
+          type="button"
+          className={classes.day}
+          style={{ backgroundColor: getColor(dayPercent, false) }}
+          aria-label={`${dateLabel}: ${Number.isNaN(dayPercent) ? 'no data' : `${dayPercent.toFixed(2)}% uptime`}${hasIncidents ? ', view incident details' : ''}`}
+          data-has-incidents={hasIncidents}
           onClick={() => {
-            if (dayDownTime > 0) {
-              setModalTitle(
-                `🚨 ${monitor.name} incidents at ${new Date(dayStart * 1000).toLocaleDateString()}`
-              )
-              setModelContent(
-                <>
-                  {incidentReasons.map((reason, index) => (
-                    <div key={index}>{reason}</div>
-                  ))}
-                </>
-              )
-              setModalOpened(true)
-            }
+            if (!hasIncidents) return
+            setModalTitle(`${monitor.name} incidents on ${dateLabel}`)
+            setModalContent(
+              <div className={classes.incidents}>
+                {incidentReasons.map((reason, reasonIndex) => (
+                  <p key={reasonIndex}>{reason}</p>
+                ))}
+              </div>
+            )
+            setModalOpened(true)
           }}
         />
       </Tooltip>
@@ -125,26 +120,23 @@ export default function DetailBar({
 
   return (
     <>
-      <Modal
-        opened={modalOpened}
-        onClose={() => setModalOpened(false)}
-        title={modalTitle}
-        size={'40em'}
+      <div className={classes.historyHeading}>
+        <span>90-day history</span>
+        <span className={classes.historyLegend}>
+          <span>90 days ago</span>
+          <span>Today</span>
+        </span>
+      </div>
+      <div
+        className={classes.historyBar}
+        role="group"
+        aria-label={`${monitor.name} 90-day uptime history`}
       >
-        {modelContent}
+        {bars}
+      </div>
+      <Modal opened={modalOpened} onClose={() => setModalOpened(false)} title={modalTitle} size="lg">
+        {modalContent}
       </Modal>
-      <Box
-        style={{
-          display: 'flex',
-          flexWrap: 'nowrap',
-          marginTop: '10px',
-          marginBottom: '5px',
-        }}
-        visibleFrom="180"
-        ref={barRef}
-      >
-        {uptimePercentBars.slice(Math.floor(Math.max(1 * 90 - barRect.width, 0) / 9), 90)}
-      </Box>
     </>
   )
 }

@@ -1,36 +1,78 @@
 .header {
-  height: rem(80px);
-  margin-bottom: rem(60px);
-  background-color: var(--mantine-color-body);
-  border-bottom: rem(1px) solid light-dark(var(--mantine-color-gray-3), var(--mantine-color-dark-4));
+  min-height: 72px;
+  background-color: var(--header-bg);
+  border-bottom: 1px solid var(--line);
   display: flex;
   align-items: center;
+  backdrop-filter: blur(16px);
 }
 
 .inner {
-  width: 100vw;
-  height: rem(56px);
+  width: min(100% - 48px, 1024px);
+  min-height: 72px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: 0;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.logo {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: var(--surface);
+}
+
+.brandName {
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.brandCaption {
+  display: block;
+  margin-top: 2px;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 500;
 }
 
 .link {
   display: block;
   line-height: 1;
-  padding: rem(8px) rem(12px);
-  border-radius: var(--mantine-radius-sm);
+  padding: 10px 12px;
+  border-radius: 9px;
   text-decoration: none;
-  color: light-dark(var(--mantine-color-gray-7), var(--mantine-color-dark-0));
-  font-size: var(--mantine-font-size-sm);
+  color: var(--text-muted);
+  font-size: 13px;
   font-weight: 500;
+  transition: color 140ms ease, background-color 140ms ease;
 
   @mixin hover {
-    background-color: light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-6));
+    background-color: var(--surface-muted);
+    color: var(--text);
   }
 
   [data-mantine-color-scheme] &[data-active] {
-    background-color: var(--mantine-color-blue-filled);
-    color: var(--mantine-color-white);
+    background-color: var(--link-active-bg);
+    color: var(--accent);
+  }
+}
+
+@media (max-width: 640px) {
+  .inner {
+    width: calc(100% - 32px);
   }
 }

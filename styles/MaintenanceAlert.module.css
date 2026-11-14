@@ -1,0 +1,32 @@
+.alert {
+  margin: 14px auto 0;
+  border-radius: 12px;
+}
+
+.body {
+  color: inherit;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.schedule {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  margin-top: 12px;
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+.schedule b {
+  margin-right: 4px;
+  color: inherit;
+}
+
+.affected {
+  margin-top: 12px;
+}
+
+.affected :global(.mantine-List-root) {
+  margin-top: 4px;
+}
