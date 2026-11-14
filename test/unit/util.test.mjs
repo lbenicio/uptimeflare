@@ -72,6 +72,11 @@ describe('worker utilities', () => {
     assert.match(result.body, /Issue: unspecified/)
   })
 
+  it('formats a continuing outage without a reason', () => {
+    const result = formatStatusChangeNotification({ name: 'API' }, false, 100, 220, '', 'UTC')
+    assert.match(result.body, /Issue: unspecified/)
+  })
+
   it('formats a continuing outage with its reason', () => {
     const result = formatStatusChangeNotification({ name: 'API' }, false, 100, 220, '503', 'UTC')
     assert.equal(result.title, '🔴 API is still down.')
