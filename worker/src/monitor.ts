@@ -18,7 +18,7 @@ export async function getStatus(monitor: MonitorTarget): Promise<Status> {
       return await checkCertificate(monitor, target)
     } catch (error: any) {
       return {
-        status: 'error',
+        status: 'unavailable',
         checkedAt: Math.round(Date.now() / 1000),
         error: error.name + ': ' + error.message,
       }
@@ -167,7 +167,7 @@ function checkCertificate(monitor: MonitorTarget, target: URL): Promise<Certific
 
     let settled = false
     const timeoutId = setTimeout(() => {
-      finish('error', `TLS connection timed out after ${timeout}ms`)
+      finish('unavailable', `TLS connection timed out after ${timeout}ms`)
     }, timeout)
 
     const finish = (
@@ -242,12 +242,21 @@ function checkCertificate(monitor: MonitorTarget, target: URL): Promise<Certific
 
     socket.once('error', (error: Error) => {
       const code = (error as NodeJS.ErrnoException).code ?? ''
-      const invalidCertificate =
-        code.startsWith('CERT_') ||
-        code === 'ERR_TLS_CERT_ALTNAME_INVALID' ||
-        error.message.toLowerCase().includes('certificate')
+      const certificateValidationCodes = new Set([
+        'CERT_HAS_EXPIRED',
+        'CERT_NOT_YET_VALID',
+        'CERT_REVOKED',
+        'CERT_UNTRUSTED',
+        'ERR_TLS_CERT_ALTNAME_INVALID',
+        'DEPTH_ZERO_SELF_SIGNED_CERT',
+        'SELF_SIGNED_CERT_IN_CHAIN',
+        'UNABLE_TO_VERIFY_LEAF_SIGNATURE',
+        'UNABLE_TO_GET_ISSUER_CERT',
+        'UNABLE_TO_GET_ISSUER_CERT_LOCALLY',
+      ])
+      const invalidCertificate = certificateValidationCodes.has(code)
       finish(
-        invalidCertificate ? 'invalid' : 'error',
+        invalidCertificate ? 'invalid' : 'unavailable',
         `TLS connection failed: ${error.message}`
       )
     })
