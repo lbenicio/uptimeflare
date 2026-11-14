@@ -32,6 +32,7 @@ export type MonitorTarget = {
   expectedCodes?: number[]
   timeout?: number
   certificateExpiryWarningDays?: number
+  certificateZoneName?: string
   headers?: { [key: string]: string | number }
   body?: string
   responseKeyword?: string
