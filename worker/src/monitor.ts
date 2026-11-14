@@ -302,8 +302,8 @@ async function checkCloudflareEdgeCertificate(
   monitor: MonitorTarget,
   config?: CloudflareCertificateApi
 ): Promise<CertificateCheck> {
-  if (!config?.apiToken || !config.zoneId) {
-    throw new Error('CLOUDFLARE_API_TOKEN and certificateZoneName monitor config are required')
+  if (!config?.apiToken) {
+    throw new Error('CLOUDFLARE_API_TOKEN is required for the Cloudflare edge certificate check')
   }
 
   type EdgeCertificate = {
