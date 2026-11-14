@@ -16,11 +16,34 @@ export default function MonitorDetail({
 }) {
   const incidents = state.incident[monitor.id] ?? []
   const latency = state.latency[monitor.id]
+  const certificate = state.certificates?.[monitor.id]
+  const certificateText =
+    certificate?.status === 'valid'
+      ? `TLS valid · expires ${certificate.expiresAt ? new Date(certificate.expiresAt).toLocaleDateString() : 'date unavailable'}`
+      : certificate?.status === 'warning'
+        ? `TLS expires in ${certificate.daysRemaining} days`
+        : certificate?.status === 'invalid'
+          ? 'TLS certificate invalid'
+          : certificate?.status === 'error'
+            ? 'TLS check failed'
+            : 'TLS check pending'
+  const certificateStatus = certificate?.status ?? 'pending'
+  const certificateMarker =
+    monitor.certificateExpiryWarningDays === undefined ? null : (
+      <Tooltip label={certificate?.error || certificateText}>
+        <span className={classes.certificateMarker} data-status={certificateStatus} aria-label={certificateText}>
+          TLS
+        </span>
+      </Tooltip>
+    )
 
   if (!latency || incidents.length === 0) {
     return (
       <div className={classes.emptyState}>
-        <Text className={classes.monitorName}>{monitor.name}</Text>
+        <Text className={classes.monitorName}>
+          {monitor.name}
+          {certificateMarker}
+        </Text>
         <Text className={classes.noData}>
           No monitor history is available yet. Check that your worker has deployed the latest config.
         </Text>
@@ -74,6 +97,7 @@ export default function MonitorDetail({
       ) : (
         <span>{monitor.name}</span>
       )}
+      {certificateMarker}
     </Text>
   )
 
