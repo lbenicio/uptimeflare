@@ -73,6 +73,14 @@ export type Callbacks = {
   ) => Promise<any>
 }
 
+export type CertificateCheck = {
+  status: 'valid' | 'warning' | 'invalid' | 'error'
+  checkedAt: number
+  expiresAt?: number
+  daysRemaining?: number
+  error?: string
+}
+
 export type MonitorState = {
   version?: number
   lastUpdate: number
@@ -86,6 +94,8 @@ export type MonitorState = {
       error: string[]
     }[]
   >
+
+  certificates?: Record<string, CertificateCheck>
 
   latency: Record<
     string,
