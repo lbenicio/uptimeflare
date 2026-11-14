@@ -12,6 +12,7 @@ import MonitorDetail from '@/components/MonitorDetail'
 import mock from '@/mock/state.json'
 import { getCloudflareContext } from '@opennextjs/cloudflare'
 import classes from '@/styles/Home.module.css'
+import { IconBrandGithub } from '@tabler/icons-react'
 import { readMonitorState } from '@/lib/monitor-state'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -69,9 +70,22 @@ export default function Home({
         )}
 
         <footer className={classes.footer}>
-          <a href="https://github.com/lbenicio" target="_blank" rel="noreferrer">
-            Made by lbenicio
-          </a>
+          <div className={classes.footerInner}>
+            <div className={classes.footerBrand}>
+              <span className={classes.footerMark} aria-hidden="true">U</span>
+              <span className={classes.footerBrandText}>
+                <span className={classes.footerTitle}>UptimeFlare</span>
+                <span className={classes.footerCaption}>Live service status</span>
+              </span>
+            </div>
+            <div className={classes.footerLinks}>
+              <span className={classes.footerNote}>Status and availability at a glance</span>
+              <a href="https://github.com/lbenicio/uptimeflare" target="_blank" rel="noreferrer">
+                <IconBrandGithub size={15} stroke={1.8} aria-hidden="true" />
+                <span>View source</span>
+              </a>
+            </div>
+          </div>
         </footer>
       </main>
     </>
@@ -102,6 +116,7 @@ export async function getServerSideProps({ res }: GetServerSidePropsContext) {
       statusPageLink: monitor?.statusPageLink,
       // @ts-ignore
       hideLatencyChart: monitor?.hideLatencyChart,
+      certificateExpiryWarningDays: monitor?.certificateExpiryWarningDays,
     }
   })
 

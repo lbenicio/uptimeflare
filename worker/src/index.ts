@@ -8,6 +8,7 @@ import { readOrCreateMonitorState, writeMonitorState } from '../../lib/monitor-s
 export interface Env {
   UPTIMEFLARE_DB: D1Database
   REMOTE_CHECKER_DO: DurableObjectNamespace<RemoteChecker>
+  CLOUDFLARE_API_TOKEN?: string
 }
 
 const Worker = {
@@ -71,8 +72,12 @@ const Worker = {
 
     // Load status from D1, initializing an empty state for a new installation.
     let state: MonitorState = await readOrCreateMonitorState(env.UPTIMEFLARE_DB)
+    state.certificates = state.certificates || {}
     const monitorStateMissing = workerConfig.monitors.some(
-      (monitor) => !state.incident[monitor.id] || !state.latency[monitor.id]
+      (monitor) =>
+        !state.incident[monitor.id] ||
+        !state.latency[monitor.id] ||
+        (monitor.certificateExpiryWarningDays !== undefined && !state.certificates?.[monitor.id])
     )
     state.overallDown = 0
     state.overallUp = 0
@@ -114,7 +119,7 @@ const Worker = {
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify(monitor),
                 })
-              ).json<{ location: string; status: { ping: number; up: boolean; err: string } }>()
+              ).json<{ location: string; status: { ping: number; up: boolean; err: string; certificate?: import('../../types/config').CertificateCheck } }>()
             }
             checkLocation = resp.location
             status = resp.status
@@ -122,18 +127,22 @@ const Worker = {
             console.error('Error calling proxy: ' + err)
             if (monitor.checkProxyFallback) {
               // console.log('Falling back to local check...')
-              status = await getStatus(monitor)
+              status = await getStatus(monitor, env)
             } else {
               status = { ping: 0, up: false, err: 'Error initiating check from remote worker' }
             }
           }
         } else {
           // Initiate a check from the current location
-          status = await getStatus(monitor)
+          status = await getStatus(monitor, env)
         }
 
-        // const status = await getStatus(monitor)
+        // const status = await getStatus(monitor, env)
         const currentTimeSecond = Math.round(Date.now() / 1000)
+
+        if (status.certificate) {
+          state.certificates![monitor.id] = status.certificate
+        }
 
         // Update counters
         status.up ? state.overallUp++ : state.overallDown++
@@ -331,16 +340,19 @@ const Worker = {
 export default Worker
 
 export class RemoteChecker extends DurableObject {
+  private env: Env
+
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env)
+    this.env = env
   }
 
   async getLocationAndStatus(
     monitor: MonitorTarget
-  ): Promise<{ location: string; status: { ping: number; up: boolean; err: string } }> {
+  ): Promise<{ location: string; status: { ping: number; up: boolean; err: string; certificate?: import('../../types/config').CertificateCheck } }> {
     const colo = (await getWorkerLocation()) as string
     console.log(`Running remote checker (DurableObject) at ${colo}...`)
-    const status = await getStatus(monitor)
+    const status = await getStatus(monitor, this.env)
     return {
       location: colo,
       status: status,
