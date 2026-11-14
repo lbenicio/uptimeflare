@@ -6,20 +6,27 @@ import { checkServerIdentity, connect as tlsConnect } from 'node:tls'
 import type { CertificateCheck } from '../../types/config'
 
 export async function getStatus(monitor: MonitorTarget): Promise<Status> {
-  const status = await getEndpointStatus(monitor)
-  if (monitor.method === 'SSL_CERT' || monitor.certificateExpiryWarningDays === undefined) return status
-
-  try {
-    const target = new URL(monitor.target)
-    if (target.protocol !== 'https:') throw new Error('TLS checks require an https:// target')
-    status.certificate = await checkCertificate(monitor, target)
-  } catch (error: any) {
-    status.certificate = {
-      status: 'error',
-      checkedAt: Math.round(Date.now() / 1000),
-      error: error.name + ': ' + error.message,
-    }
+  const endpointCheck = getEndpointStatus(monitor)
+  if (monitor.method === 'SSL_CERT' || monitor.certificateExpiryWarningDays === undefined) {
+    return endpointCheck
   }
+
+  const certificateCheck = (async (): Promise<CertificateCheck> => {
+    try {
+      const target = new URL(monitor.target)
+      if (target.protocol !== 'https:') throw new Error('TLS checks require an https:// target')
+      return await checkCertificate(monitor, target)
+    } catch (error: any) {
+      return {
+        status: 'error',
+        checkedAt: Math.round(Date.now() / 1000),
+        error: error.name + ': ' + error.message,
+      }
+    }
+  })()
+
+  const [status, certificate] = await Promise.all([endpointCheck, certificateCheck])
+  status.certificate = certificate
   return status
 }
 
