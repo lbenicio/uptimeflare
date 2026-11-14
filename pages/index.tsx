@@ -102,6 +102,7 @@ export async function getServerSideProps({ res }: GetServerSidePropsContext) {
       statusPageLink: monitor?.statusPageLink,
       // @ts-ignore
       hideLatencyChart: monitor?.hideLatencyChart,
+      certificateExpiryWarningDays: monitor?.certificateExpiryWarningDays,
     }
   })
 
