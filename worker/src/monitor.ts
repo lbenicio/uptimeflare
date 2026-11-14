@@ -5,7 +5,7 @@ import { isIP } from 'node:net'
 import { checkServerIdentity, connect as tlsConnect } from 'node:tls'
 import type { CertificateCheck } from '../../types/config'
 
-type CloudflareCertificateApi = { apiToken?: string }
+type CloudflareCertificateApi = { apiToken?: string; CLOUDFLARE_API_TOKEN?: string }
 
 export async function getStatus(
   monitor: MonitorTarget,
@@ -302,8 +302,9 @@ async function checkCloudflareEdgeCertificate(
   monitor: MonitorTarget,
   config?: CloudflareCertificateApi
 ): Promise<CertificateCheck> {
-  if (!config?.apiToken || !config.zoneId) {
-    throw new Error('CLOUDFLARE_API_TOKEN and certificateZoneName monitor config are required')
+  const apiToken = config?.CLOUDFLARE_API_TOKEN ?? config?.apiToken
+  if (!apiToken) {
+    throw new Error('CLOUDFLARE_API_TOKEN is required for the Cloudflare edge certificate check')
   }
 
   type EdgeCertificate = {
@@ -331,7 +332,7 @@ async function checkCloudflareEdgeCertificate(
   zonesUrl.searchParams.set('per_page', '1')
   const zonesResponse = await fetchTimeout(zonesUrl.toString(), monitor.timeout || 10000, {
     headers: {
-      Authorization: `Bearer ${config.apiToken}`,
+      Authorization: `Bearer ${apiToken}`,
       Accept: 'application/json',
     },
   })
