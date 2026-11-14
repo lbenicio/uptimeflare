@@ -37,6 +37,7 @@ const workerConfig: WorkerConfig = {
       // `target` is a valid URL
       target: 'https://lbenicio.dev',
       certificateExpiryWarningDays: 30,
+      certificateZoneName: 'lbenicio.dev',
       // [OPTIONAL] `tooltip` is ONLY used at status page to show a tooltip
       tooltip: 'My personal website homepage',
       // [OPTIONAL] `statusPageLink` is ONLY used for clickable link at status page
@@ -62,6 +63,7 @@ const workerConfig: WorkerConfig = {
       // `target` is a valid URL
       target: 'https://blog.lbenicio.dev',
       certificateExpiryWarningDays: 30,
+      certificateZoneName: 'lbenicio.dev',
       // [OPTIONAL] `tooltip` is ONLY used at status page to show a tooltip
       tooltip: 'My personal blog',
       // [OPTIONAL] `statusPageLink` is ONLY used for clickable link at status page
@@ -87,6 +89,7 @@ const workerConfig: WorkerConfig = {
       // `target` is a valid URL
       target: 'https://newsletter.lbenicio.dev',
       certificateExpiryWarningDays: 30,
+      certificateZoneName: 'lbenicio.dev',
       // [OPTIONAL] `tooltip` is ONLY used at status page to show a tooltip
       tooltip: 'Sign up for my personal newsletter',
       // [OPTIONAL] `statusPageLink` is ONLY used for clickable link at status page
@@ -112,6 +115,7 @@ const workerConfig: WorkerConfig = {
       // `target` is a valid URL
       target: 'https://pgp.lbenicio.dev',
       certificateExpiryWarningDays: 30,
+      certificateZoneName: 'lbenicio.dev',
       // [OPTIONAL] `tooltip` is ONLY used at status page to show a tooltip
       tooltip: 'Myt personal pgp key',
       // [OPTIONAL] `statusPageLink` is ONLY used for clickable link at status page
@@ -137,6 +141,7 @@ const workerConfig: WorkerConfig = {
       // `target` is a valid URL
       target: 'https://socials.lbenicio.dev',
       certificateExpiryWarningDays: 30,
+      certificateZoneName: 'lbenicio.dev',
       // [OPTIONAL] `tooltip` is ONLY used at status page to show a tooltip
       tooltip: 'My social networks links',
       // [OPTIONAL] `statusPageLink` is ONLY used for clickable link at status page
