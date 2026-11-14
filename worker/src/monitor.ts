@@ -1,4 +1,4 @@
-import { MonitorTarget } from '../../types/config';
+import type { MonitorTarget } from '../../types/config'
 import type { Status } from './types/status.type';
 import { withTimeout, fetchTimeout } from './util';
 import { isIP } from 'node:net'
