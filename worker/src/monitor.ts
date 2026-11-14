@@ -5,7 +5,7 @@ import { isIP } from 'node:net'
 import { checkServerIdentity, connect as tlsConnect } from 'node:tls'
 import type { CertificateCheck } from '../../types/config'
 
-type CloudflareCertificateApi = { apiToken?: string; zoneId?: string }
+type CloudflareCertificateApi = { apiToken?: string }
 
 export async function getStatus(
   monitor: MonitorTarget,
@@ -303,7 +303,7 @@ async function checkCloudflareEdgeCertificate(
   config?: CloudflareCertificateApi
 ): Promise<CertificateCheck> {
   if (!config?.apiToken || !config.zoneId) {
-    throw new Error('CLOUDFLARE_API_TOKEN and CLOUDFLARE_ZONE_ID Worker bindings are required')
+    throw new Error('CLOUDFLARE_API_TOKEN and certificateZoneName monitor config are required')
   }
 
   type EdgeCertificate = {
@@ -323,11 +323,36 @@ async function checkCloudflareEdgeCertificate(
     result_info?: { total_pages?: number }
   }
 
+  const zoneName = monitor.certificateZoneName
+  if (!zoneName) throw new Error('certificateZoneName is not set for this monitor')
+
+  const zonesUrl = new URL('https://api.cloudflare.com/client/v4/zones')
+  zonesUrl.searchParams.set('name', zoneName)
+  zonesUrl.searchParams.set('per_page', '1')
+  const zonesResponse = await fetchTimeout(zonesUrl.toString(), monitor.timeout || 10000, {
+    headers: {
+      Authorization: `Bearer ${config.apiToken}`,
+      Accept: 'application/json',
+    },
+  })
+  if (!zonesResponse.ok) throw new Error(`Cloudflare Zones API returned HTTP ${zonesResponse.status}`)
+
+  const zonesPayload = (await zonesResponse.json()) as {
+    success: boolean
+    errors?: { message?: string }[]
+    result?: { id: string; name: string }[]
+  }
+  if (!zonesPayload.success) {
+    throw new Error(zonesPayload.errors?.map((item) => item.message).filter(Boolean).join('; ') || 'Cloudflare Zones API request failed')
+  }
+  const zone = zonesPayload.result?.find((result) => result.name === zoneName)
+  if (!zone) throw new Error(`Cloudflare zone ${zoneName} was not found for this API token`)
+
   const packs: CertificatePack[] = []
   const perPage = 50
   for (let page = 1; page <= 20; page++) {
     const endpoint = new URL(
-      `https://api.cloudflare.com/client/v4/zones/${encodeURIComponent(config.zoneId)}/ssl/certificate_packs`
+      `https://api.cloudflare.com/client/v4/zones/${encodeURIComponent(zone.id)}/ssl/certificate_packs`
     )
     endpoint.searchParams.set('status', 'all')
     endpoint.searchParams.set('per_page', String(perPage))
