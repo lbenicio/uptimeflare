@@ -71,11 +71,13 @@ jobs:
           npm install
 
       - name: Build worker
+        id: build_worker
         run: |
           cd worker
           npx wrangler deploy src/index.ts --config wrangler.toml --outdir dist --dry-run
 
       - name: Deploy using Terraform
+        id: deploy_infrastructure
         # As we don't save terraform state somewhere, we need to import the existing resources
         run: |
           terraform init
@@ -112,6 +114,7 @@ jobs:
           TF_VAR_CLOUDFLARE_ACCOUNT_ID: ${{ steps.fetch_account_id.outputs.account_id }}
 
       - name: Apply D1 migrations
+        id: apply_migrations
         run: |
           node scripts/set-wrangler-d1-id.mjs "$UPTIMEFLARE_D1_DATABASE_ID"
           npx wrangler d1 migrations apply uptimeflare_state --remote --config wrangler.jsonc
@@ -119,10 +122,50 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ steps.fetch_account_id.outputs.account_id }}
 
-      - name: Build and deploy app (OpenNext)
-        run: |
-          npx opennextjs-cloudflare build
-          npx opennextjs-cloudflare deploy
+      - name: Build app (OpenNext)
+        id: build_app
+        run: npx opennextjs-cloudflare build
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ steps.fetch_account_id.outputs.account_id }}
+
+      - name: Deploy app (OpenNext)
+        id: deploy_app
+        run: npx opennextjs-cloudflare deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ steps.fetch_account_id.outputs.account_id }}
+
+      - name: Deployment summary
+        if: always()
+        env:
+          WORKER_BUILD: ${{ steps.build_worker.outcome }}
+          INFRASTRUCTURE: ${{ steps.deploy_infrastructure.outcome }}
+          MIGRATIONS: ${{ steps.apply_migrations.outcome }}
+          APP_BUILD: ${{ steps.build_app.outcome }}
+          APP_DEPLOY: ${{ steps.deploy_app.outcome }}
+          COMMIT_SHA: ${{ github.sha }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          status_icon() {
+            case "$1" in
+              success) echo "✅ Success" ;;
+              failure) echo "❌ Failed" ;;
+              cancelled) echo "⏹️ Cancelled" ;;
+              *) echo "⏭️ Skipped" ;;
+            esac
+          }
+
+          {
+            echo "## 🚀 Uptimeflare deployment"
+            echo
+            echo "| Stage | Result |"
+            echo "|:--|:--|"
+            echo "| Monitor worker build | $(status_icon "$WORKER_BUILD") |"
+            echo "| Cloudflare infrastructure | $(status_icon "$INFRASTRUCTURE") |"
+            echo "| D1 migrations | $(status_icon "$MIGRATIONS") |"
+            echo "| OpenNext app build | $(status_icon "$APP_BUILD") |"
+            echo "| OpenNext app deploy | $(status_icon "$APP_DEPLOY") |"
+            echo
+            echo "[View workflow run]($RUN_URL) · Commit [${COMMIT_SHA:0:7}](${{ github.server_url }}/${{ github.repository }}/commit/$COMMIT_SHA)"
+          } >> "$GITHUB_STEP_SUMMARY"
