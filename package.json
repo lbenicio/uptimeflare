@@ -5,7 +5,7 @@
   "scripts": {
     "start:dev": "next dev",
     "start:prod": "next start",
-    "build:pkg": "next build",
+    "build": "next build",
     "fmt:lint": "next lint",
     "deps:install": "npm install --verbose --no-fund --no-audit",
     "deps:ci": "npm ci --verbose --no-fund --no-audit",
