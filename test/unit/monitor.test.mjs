@@ -17,7 +17,7 @@ mock.module('node:tls', {
       socket.authorizationError = tlsBehavior.authorizationError
       socket.destroyCalls = 0
       socket.destroy = () => { socket.destroyCalls += 1 }
-      socket.getPeerCertificate = () => tlsBehavior.certificate ?? {
+      socket.getPeerCertificate = () => Object.hasOwn(tlsBehavior, 'certificate') ? tlsBehavior.certificate : {
         valid_from: new Date(Date.now() - 86400000).toUTCString(),
         valid_to: new Date(Date.now() + 365 * 86400000).toUTCString(),
         subject: { CN: 'example.test' },
@@ -102,6 +102,12 @@ describe('monitor endpoint checks', () => {
     const missing = await getStatus({ ...baseMonitor, responseKeyword: 'healthy', certificateExpiryWarningDays: undefined })
     assert.equal(missing.up, false)
     assert.equal(missing.err, "HTTP response doesn't contain the configured keyword")
+  })
+
+  it('allows responses when a forbidden keyword is absent', async (t) => {
+    t.mock.method(globalThis, 'fetch', async () => response('service healthy'))
+    const status = await getStatus({ ...baseMonitor, responseForbiddenKeyword: 'degraded', certificateExpiryWarningDays: undefined })
+    assert.equal(status.up, true)
   })
 
   it('rejects forbidden response keywords', async (t) => {
@@ -226,6 +232,20 @@ describe('TLS certificate checks', () => {
     const status = await runStatus(t)
     assert.equal(status.certificate.status, 'invalid')
     assert.match(status.certificate.error, /did not provide a peer certificate/)
+  })
+
+  it('treats a missing peer certificate object as invalid', async (t) => {
+    tlsBehavior.certificate = null
+    const status = await runStatus(t)
+    assert.equal(status.certificate.status, 'invalid')
+    assert.match(status.certificate.error, /did not provide a peer certificate/)
+  })
+
+  it('does not use the Cloudflare fallback for non-default TLS ports', async (t) => {
+    tlsBehavior.error = Object.assign(new Error('Cannot connect to the specified address'), { code: 'EHOSTUNREACH' })
+    const status = await runStatus(t, { ...baseMonitor, target: 'https://example.test:8443' }, { CLOUDFLARE_API_TOKEN: 'token' })
+    assert.equal(status.certificate.status, 'unavailable')
+    assert.match(status.certificate.error, /TLS connection failed/)
   })
 
   it('classifies known certificate validation socket errors as invalid', async (t) => {
