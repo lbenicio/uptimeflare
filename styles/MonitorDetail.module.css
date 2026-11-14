@@ -102,8 +102,13 @@
   color: var(--status-warning);
 }
 
-.certificateMarker[data-status='invalid'],
-.certificateMarker[data-status='error'] {
+.certificateMarker[data-status='invalid'] {
   border-color: var(--status-down);
   color: var(--status-down);
+}
+
+.certificateMarker[data-status='unavailable'] {
+  border-color: var(--line);
+  background: var(--surface-muted);
+  color: var(--text-muted);
 }
