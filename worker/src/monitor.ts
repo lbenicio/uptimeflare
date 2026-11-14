@@ -5,7 +5,12 @@ import { isIP } from 'node:net'
 import { checkServerIdentity, connect as tlsConnect } from 'node:tls'
 import type { CertificateCheck } from '../../types/config'
 
-export async function getStatus(monitor: MonitorTarget): Promise<Status> {
+type CloudflareCertificateApi = { apiToken?: string; zoneId?: string }
+
+export async function getStatus(
+  monitor: MonitorTarget,
+  cloudflare?: CloudflareCertificateApi
+): Promise<Status> {
   const endpointCheck = getEndpointStatus(monitor)
   if (monitor.method === 'SSL_CERT' || monitor.certificateExpiryWarningDays === undefined) {
     return endpointCheck
@@ -15,7 +20,7 @@ export async function getStatus(monitor: MonitorTarget): Promise<Status> {
     try {
       const target = new URL(monitor.target)
       if (target.protocol !== 'https:') throw new Error('TLS checks require an https:// target')
-      return await checkCertificate(monitor, target)
+      return await checkCertificate(monitor, target, cloudflare)
     } catch (error: any) {
       return {
         status: 'unavailable',
@@ -151,7 +156,11 @@ async function getEndpointStatus(monitor: MonitorTarget): Promise<Status> {
   return status
 }
 
-function checkCertificate(monitor: MonitorTarget, target: URL): Promise<CertificateCheck> {
+function checkCertificate(
+  monitor: MonitorTarget,
+  target: URL,
+  cloudflare?: CloudflareCertificateApi
+): Promise<CertificateCheck> {
   const timeout = monitor.timeout || 10000
   const port = Number(target.port || 443)
 
@@ -240,7 +249,32 @@ function checkCertificate(monitor: MonitorTarget, target: URL): Promise<Certific
       finish('valid', '', validTo, remainingDays)
     })
 
-    socket.once('error', (error: Error) => {
+    socket.once('error', async (error: Error) => {
+      if (
+        port === 443 &&
+        error.message.toLowerCase().includes('cannot connect to the specified address')
+      ) {
+        try {
+          const remoteStatus = await checkCloudflareEdgeCertificate(
+            target.hostname,
+            monitor,
+            cloudflare
+          )
+          finish(
+            remoteStatus.status,
+            remoteStatus.error ?? '',
+            remoteStatus.expiresAt,
+            remoteStatus.daysRemaining
+          )
+        } catch (remoteError: any) {
+          finish(
+            'unavailable',
+            `Cloudflare edge certificate check failed: ${remoteError.message}`
+          )
+        }
+        return
+      }
+
       const code = (error as NodeJS.ErrnoException).code ?? ''
       const certificateValidationCodes = new Set([
         'CERT_HAS_EXPIRED',
@@ -261,4 +295,96 @@ function checkCertificate(monitor: MonitorTarget, target: URL): Promise<Certific
       )
     })
   })
+}
+
+async function checkCloudflareEdgeCertificate(
+  hostname: string,
+  monitor: MonitorTarget,
+  config?: CloudflareCertificateApi
+): Promise<CertificateCheck> {
+  if (!config?.apiToken || !config.zoneId) {
+    throw new Error('CLOUDFLARE_API_TOKEN and CLOUDFLARE_ZONE_ID Worker bindings are required')
+  }
+
+  type EdgeCertificate = {
+    hosts?: string[]
+    status?: string
+    expires_on?: string
+  }
+  type CertificatePack = {
+    hosts?: string[]
+    status?: string
+    certificates?: EdgeCertificate[]
+  }
+  type CertificatePackResponse = {
+    success: boolean
+    errors?: { message?: string }[]
+    result?: CertificatePack[]
+    result_info?: { total_pages?: number }
+  }
+
+  const packs: CertificatePack[] = []
+  const perPage = 50
+  for (let page = 1; page <= 20; page++) {
+    const endpoint = new URL(
+      `https://api.cloudflare.com/client/v4/zones/${encodeURIComponent(config.zoneId)}/ssl/certificate_packs`
+    )
+    endpoint.searchParams.set('status', 'all')
+    endpoint.searchParams.set('per_page', String(perPage))
+    endpoint.searchParams.set('page', String(page))
+
+    const response = await fetchTimeout(endpoint.toString(), monitor.timeout || 10000, {
+      headers: {
+        Authorization: `Bearer ${config.apiToken}`,
+        Accept: 'application/json',
+      },
+    })
+    if (!response.ok) throw new Error(`Cloudflare API returned HTTP ${response.status}`)
+
+    const payload = (await response.json()) as CertificatePackResponse
+    if (!payload.success) {
+      throw new Error(payload.errors?.map((item) => item.message).filter(Boolean).join('; ') || 'Cloudflare API request failed')
+    }
+    packs.push(...(payload.result ?? []))
+    const totalPages = payload.result_info?.total_pages ?? page
+    if (page >= totalPages || (payload.result?.length ?? 0) < perPage) break
+  }
+
+  const matchesHostname = (host: string) =>
+    host === hostname ||
+    (host.startsWith('*.') && hostname.endsWith(host.slice(1)) && hostname.length > host.length - 1)
+
+  const matchingCertificates = packs.flatMap((pack) =>
+    (pack.certificates ?? [])
+      .map((certificate) => ({
+        ...certificate,
+        hosts: certificate.hosts?.length ? certificate.hosts : pack.hosts ?? [],
+        status: certificate.status ?? pack.status,
+      }))
+      .filter((certificate) => (certificate.hosts ?? []).some(matchesHostname))
+  )
+  const activeCertificates = matchingCertificates
+    .filter((certificate) => certificate.status === 'active' && certificate.expires_on)
+    .map((certificate) => ({
+      ...certificate,
+      expiresAt: Date.parse(certificate.expires_on!),
+    }))
+    .filter((certificate) => Number.isFinite(certificate.expiresAt))
+
+  if (activeCertificates.length === 0) {
+    throw new Error('No active Cloudflare edge certificate matched this hostname')
+  }
+
+  const expiresAt = Math.min(...activeCertificates.map((certificate) => certificate.expiresAt))
+  const daysRemaining = Math.ceil((expiresAt - Date.now()) / (24 * 60 * 60 * 1000))
+  const warningDays = Math.max(0, monitor.certificateExpiryWarningDays ?? 30)
+  return {
+    status: daysRemaining <= warningDays ? 'warning' : 'valid',
+    checkedAt: Math.round(Date.now() / 1000),
+    expiresAt,
+    daysRemaining,
+    ...(daysRemaining <= warningDays
+      ? { error: `Cloudflare edge certificate expires in ${daysRemaining} days` }
+      : {}),
+  }
 }
