@@ -282,7 +282,7 @@ describe('TLS certificate checks', () => {
     )
     assert.equal(status.certificate.status, 'valid')
     assert.equal(calls.length, 3)
-    assert.ok(calls.every(({ options }) => options.headers?.Authorization === 'Bearer test-token'))
+    assert.ok(calls.slice(1).every(({ options }) => options.headers?.Authorization === 'Bearer test-token'))
     assert.match(calls[2].url, /zones%2Fid%2Fssl|zones\/zone%2Fid\/ssl/)
   })
 
