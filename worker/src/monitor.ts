@@ -361,7 +361,7 @@ async function checkCloudflareEdgeCertificate(
 
     const response = await fetchTimeout(endpoint.toString(), monitor.timeout || 10000, {
       headers: {
-        Authorization: `Bearer ${config.apiToken}`,
+        Authorization: `Bearer ${apiToken}`,
         Accept: 'application/json',
       },
     })
