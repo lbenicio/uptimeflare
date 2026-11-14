@@ -68,15 +68,6 @@ export default function Home({
         )}
 
         <footer className={classes.footer}>
-          <span>Powered by</span>{' '}
-          <a href="https://github.com/lyc8503/UptimeFlare" target="_blank" rel="noreferrer">
-            UptimeFlare
-          </a>{' '}
-          <span>and</span>{' '}
-          <a href="https://www.cloudflare.com/" target="_blank" rel="noreferrer">
-            Cloudflare
-          </a>
-          <span className={classes.footerDivider}>·</span>
           <a href="https://github.com/lbenicio" target="_blank" rel="noreferrer">
             Made by lbenicio
           </a>
