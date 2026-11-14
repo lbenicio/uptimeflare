@@ -82,8 +82,15 @@ describe('Uptimeflare web app end-to-end', () => {
     const response = await fetch(baseUrl)
     assert.equal(response.status, 200)
     const html = await response.text()
-    assert.match(html, /UptimeFlare/)
-    assert.match(html, /Live service status/)
-    assert.match(html, /View source/)
+    assert.match(html, /<div id="__next">/)
+    const payloadStart = html.indexOf('<script id="__NEXT_DATA__" type="application/json">')
+    assert.notEqual(payloadStart, -1, 'Next.js hydration payload should be present')
+    const jsonStart = html.indexOf('>', payloadStart) + 1
+    const jsonEnd = html.indexOf('</script>', jsonStart)
+    assert.notEqual(jsonEnd, -1, 'Next.js hydration payload should close')
+    const nextData = JSON.parse(html.slice(jsonStart, jsonEnd))
+    const props = nextData.props.pageProps
+    assert.ok(props.state, 'status state should be passed to the page')
+    assert.equal(props.monitors.find((monitor) => monitor.id === 'homepage')?.name, 'About me')
   })
 })

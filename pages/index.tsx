@@ -32,7 +32,7 @@ export default function Home({
   }
 
   // Specify monitorId in URL hash to view a specific monitor (can be used in iframe)
-  const monitorId = window.location.hash.substring(1)
+  const monitorId = typeof window === 'undefined' ? '' : window.location.hash.substring(1)
   if (monitorId) {
     const monitor = monitors.find((monitor) => monitor.id === monitorId)
     if (!monitor || !state) {

@@ -1,4 +1,4 @@
-import { MonitorTarget } from '../../types/config';
+import type { MonitorTarget } from '../../types/config'
 import type { Status } from './types/status.type';
 import { withTimeout, fetchTimeout } from './util';
 import { isIP } from 'node:net'
@@ -361,7 +361,7 @@ async function checkCloudflareEdgeCertificate(
 
     const response = await fetchTimeout(endpoint.toString(), monitor.timeout || 10000, {
       headers: {
-        Authorization: `Bearer ${config.apiToken}`,
+        Authorization: `Bearer ${apiToken}`,
         Accept: 'application/json',
       },
     })

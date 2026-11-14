@@ -17,7 +17,7 @@ mock.module('node:tls', {
       socket.authorizationError = tlsBehavior.authorizationError
       socket.destroyCalls = 0
       socket.destroy = () => { socket.destroyCalls += 1 }
-      socket.getPeerCertificate = () => tlsBehavior.certificate ?? {
+      socket.getPeerCertificate = () => Object.hasOwn(tlsBehavior, 'certificate') ? tlsBehavior.certificate : {
         valid_from: new Date(Date.now() - 86400000).toUTCString(),
         valid_to: new Date(Date.now() + 365 * 86400000).toUTCString(),
         subject: { CN: 'example.test' },
@@ -26,16 +26,17 @@ mock.module('node:tls', {
       if (tlsBehavior.error) {
         process.nextTick(() => socket.emit('error', tlsBehavior.error))
       } else if (tlsBehavior.noEvent !== true) {
-        process.nextTick(() => socket.emit('secureConnect'))
+        process.nextTick(() => {
+          socket.emit('secureConnect')
+          if (tlsBehavior.lateError) socket.emit('error', new Error('late socket error'))
+        })
       }
       return socket
     },
     checkServerIdentity: (hostname, certificate) => identityCheck(hostname, certificate),
   },
 })
-mock.module('cloudflare:sockets', {
-  namedExports: { connect: (...args) => socketsConnect(...args) },
-})
+globalThis.__uptimeflareSocketsConnect = (...args) => socketsConnect(...args)
 
 beforeEach(() => {
   tlsBehavior = {}
@@ -54,7 +55,7 @@ const baseMonitor = {
 }
 
 function response(body = 'ok', status = 200) {
-  return new Response(body, { status })
+  return new Response(status === 204 ? null : body, { status })
 }
 
 async function runStatus(t, monitor = baseMonitor, cloudflare) {
@@ -106,6 +107,12 @@ describe('monitor endpoint checks', () => {
     assert.equal(missing.err, "HTTP response doesn't contain the configured keyword")
   })
 
+  it('allows responses when a forbidden keyword is absent', async (t) => {
+    t.mock.method(globalThis, 'fetch', async () => response('service healthy'))
+    const status = await getStatus({ ...baseMonitor, responseForbiddenKeyword: 'degraded', certificateExpiryWarningDays: undefined })
+    assert.equal(status.up, true)
+  })
+
   it('rejects forbidden response keywords', async (t) => {
     t.mock.method(globalThis, 'fetch', async () => response('service degraded'))
     const status = await getStatus({ ...baseMonitor, responseForbiddenKeyword: 'degraded', certificateExpiryWarningDays: undefined })
@@ -120,6 +127,13 @@ describe('monitor endpoint checks', () => {
     assert.equal(status.up, false)
     assert.equal(status.ping, 25)
     assert.equal(status.err, 'Timeout after 25ms')
+  })
+
+  it('rejects an invalid HTTP status below 200', async (t) => {
+    t.mock.method(globalThis, 'fetch', async () => ({ status: 199, text: async () => '' }))
+    const status = await getStatus({ ...baseMonitor, certificateExpiryWarningDays: undefined })
+    assert.equal(status.up, false)
+    assert.match(status.err, /Got: 199/)
   })
 
   it('reports other fetch errors', async (t) => {
@@ -153,6 +167,13 @@ describe('monitor endpoint checks', () => {
 })
 
 describe('TLS certificate checks', () => {
+  it('ignores a late TLS event after the handshake has completed', async (t) => {
+    tlsBehavior.lateError = true
+    const status = await runStatus(t)
+    assert.equal(status.certificate.status, 'valid')
+    assert.equal(lastSocket.destroyCalls, 1)
+  })
+
   it('validates a trusted certificate and uses SNI for DNS names', async (t) => {
     const status = await runStatus(t)
     assert.equal(status.certificate.status, 'valid')
@@ -179,6 +200,15 @@ describe('TLS certificate checks', () => {
     assert.equal(status.certificate.status, 'warning')
     assert.equal(status.certificate.daysRemaining, 3)
     assert.match(status.certificate.error, /expires soon/)
+  })
+
+  it('rejects a certificate when only its expiry date is invalid', async (t) => {
+    tlsBehavior.certificate = {
+      valid_from: new Date(Date.now() - 86400000).toUTCString(),
+      valid_to: 'invalid',
+    }
+    const status = await runStatus(t)
+    assert.equal(status.certificate.status, 'invalid')
   })
 
   it('rejects certificates with invalid validity dates', async (t) => {
@@ -223,6 +253,13 @@ describe('TLS certificate checks', () => {
     assert.match(status.certificate.error, /self-signed certificate/)
   })
 
+  it('uses a fallback reason when an unauthorized socket has no authorization error', async (t) => {
+    tlsBehavior.authorized = false
+    const status = await runStatus(t)
+    assert.equal(status.certificate.status, 'invalid')
+    assert.match(status.certificate.error, /unknown error/)
+  })
+
   it('rejects a TLS connection that has no peer certificate', async (t) => {
     tlsBehavior.certificate = {}
     const status = await runStatus(t)
@@ -230,11 +267,31 @@ describe('TLS certificate checks', () => {
     assert.match(status.certificate.error, /did not provide a peer certificate/)
   })
 
+  it('treats a missing peer certificate object as invalid', async (t) => {
+    tlsBehavior.certificate = null
+    const status = await runStatus(t)
+    assert.equal(status.certificate.status, 'invalid')
+    assert.match(status.certificate.error, /did not provide a peer certificate/)
+  })
+
+  it('does not use the Cloudflare fallback for non-default TLS ports', async (t) => {
+    tlsBehavior.error = Object.assign(new Error('Cannot connect to the specified address'), { code: 'EHOSTUNREACH' })
+    const status = await runStatus(t, { ...baseMonitor, target: 'https://example.test:8443' }, { CLOUDFLARE_API_TOKEN: 'token' })
+    assert.equal(status.certificate.status, 'unavailable')
+    assert.match(status.certificate.error, /TLS connection failed/)
+  })
+
   it('classifies known certificate validation socket errors as invalid', async (t) => {
     tlsBehavior.error = Object.assign(new Error('expired'), { code: 'CERT_HAS_EXPIRED' })
     const status = await runStatus(t)
     assert.equal(status.certificate.status, 'invalid')
     assert.match(status.certificate.error, /TLS connection failed/)
+  })
+
+  it('handles TLS errors without an error code', async (t) => {
+    tlsBehavior.error = new Error('unexpected TLS failure')
+    const status = await runStatus(t)
+    assert.equal(status.certificate.status, 'unavailable')
   })
 
   it('classifies ordinary TLS socket errors as unavailable', async (t) => {
@@ -248,6 +305,12 @@ describe('TLS certificate checks', () => {
     const status = await runStatus(t, { ...baseMonitor, timeout: 5 })
     assert.equal(status.certificate.status, 'unavailable')
     assert.match(status.certificate.error, /timed out/)
+  })
+
+  it('reports malformed targets as unavailable certificate checks', async (t) => {
+    const status = await runStatus(t, { ...baseMonitor, target: 'not a URL' })
+    assert.equal(status.certificate.status, 'unavailable')
+    assert.match(status.certificate.error, /Invalid URL/)
   })
 
   it('reports non-HTTPS targets as an unavailable certificate check', async (t) => {
@@ -264,7 +327,7 @@ describe('TLS certificate checks', () => {
     const calls = []
     t.mock.method(globalThis, 'fetch', async (url, options = {}) => {
       calls.push({ url: String(url), options })
-      if (String(url) === baseMonitor.target) return response()
+      if (String(url) === 'https://www.example.test') return response()
       if (String(url).includes('/zones?')) {
         return Response.json({ success: true, result: [{ id: 'zone/id', name: 'example.test' }] })
       }
@@ -279,12 +342,12 @@ describe('TLS certificate checks', () => {
       })
     })
     const status = await getStatus(
-      { ...baseMonitor, certificateZoneName: 'example.test' },
+      { ...baseMonitor, target: 'https://www.example.test', certificateZoneName: 'example.test' },
       { CLOUDFLARE_API_TOKEN: 'test-token' },
     )
     assert.equal(status.certificate.status, 'valid')
     assert.equal(calls.length, 3)
-    assert.ok(calls.every(({ options }) => options.headers?.Authorization === 'Bearer test-token'))
+    assert.ok(calls.slice(1).every(({ options }) => options.headers?.Authorization === 'Bearer test-token'))
     assert.match(calls[2].url, /zones%2Fid%2Fssl|zones\/zone%2Fid\/ssl/)
   })
 
