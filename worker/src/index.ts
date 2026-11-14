@@ -32,7 +32,7 @@ const Worker = {
       }
 
       // Skip notification if monitor is in maintenance
-      const maintenanceList = maintenances
+      const maintenanceList: string[] = maintenances
         .filter(
           (m) =>
             new Date(timeNow * 1000) >= new Date(m.start) &&
@@ -69,7 +69,7 @@ const Worker = {
     }
 
     // Read state, set init state if it doesn't exist
-    let state =
+    let state: MonitorState =
       ((await env.UPTIMEFLARE_STATE.get('state', {
         type: 'json',
       })) as unknown as MonitorState) ||
@@ -84,16 +84,16 @@ const Worker = {
     state.overallDown = 0
     state.overallUp = 0
 
-    let statusChanged = false
-    const currentTimeSecond = Math.round(Date.now() / 1000)
+    let statusChanged: boolean = false
+    const currentTimeSecond: number = Math.round(Date.now() / 1000)
 
     // Check each monitor in parallel
     await Promise.all(
       workerConfig.monitors.map(async (monitor) => {
         // console.log(`[${workerLocation}] Checking ${monitor.name}...`)
 
-        let monitorStatusChanged = false
-        let checkLocation = workerLocation
+        let monitorStatusChanged: boolean = false
+        let checkLocation: string = workerLocation
         let status
 
         if (monitor.checkProxy) {
@@ -102,9 +102,9 @@ const Worker = {
             // console.log('Calling check proxy: ' + monitor.checkProxy)
             let resp
             if (monitor.checkProxy.startsWith('worker://')) {
-              const doLoc = monitor.checkProxy.replace('worker://', '')
-              const doId = env.REMOTE_CHECKER_DO.idFromName(doLoc)
-              const doStub = env.REMOTE_CHECKER_DO.get(doId, {
+              const doLoc: string = monitor.checkProxy.replace('worker://', '')
+              const doId: DurableObjectId = env.REMOTE_CHECKER_DO.idFromName(doLoc)
+              const doStub: DurableObjectStub<RemoteChecker> = env.REMOTE_CHECKER_DO.get(doId, {
                 locationHint: doLoc as DurableObjectLocationHint,
               })
               resp = await doStub.getLocationAndStatus(monitor)
@@ -353,7 +353,7 @@ export class RemoteChecker extends DurableObject {
     }
   }
 
-  async kill() {
+  async kill(): Promise<void> {
     // Throwing an error in `blockConcurrencyWhile` will terminate the Durable Object instance
     // https://developers.cloudflare.com/durable-objects/api/state/#blockconcurrencywhile
     this.ctx.blockConcurrencyWhile(async () => {

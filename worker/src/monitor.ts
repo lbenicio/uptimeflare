@@ -1,16 +1,18 @@
-import { MonitorTarget } from '../../types/config'
-import { withTimeout, fetchTimeout } from './util'
+import { MonitorTarget } from '../../types/config';
+import type { Status } from './types/status.type';
+import { withTimeout, fetchTimeout } from './util';
+
 
 export async function getStatus(
   monitor: MonitorTarget
-): Promise<{ ping: number; up: boolean; err: string }> {
-  let status = {
+): Promise<Status> {
+  let status: Status = {
     ping: 0,
     up: false,
     err: 'Unknown',
   }
 
-  const startTime = Date.now()
+  const startTime: number = Date.now()
 
   if (monitor.method === 'TCP_PING') {
     // TCP port endpoint monitor
@@ -20,7 +22,7 @@ export async function getStatus(
       )
       // This is not a real https connection, but we need to add a dummy `https://` to parse the hostname & port
       const parsed = new URL('https://' + monitor.target)
-      const socket = connect({ hostname: parsed.hostname, port: Number(parsed.port) })
+      const socket: Socket = connect({ hostname: parsed.hostname, port: Number(parsed.port) })
 
       // Now we have an `opened` promise!
       await withTimeout(monitor.timeout || 10000, socket.opened)
@@ -42,7 +44,7 @@ export async function getStatus(
   } else {
     // HTTP endpoint monitor
     try {
-      const response = await fetchTimeout(monitor.target, monitor.timeout || 10000, {
+      const response: Response = await fetchTimeout(monitor.target, monitor.timeout || 10000, {
         method: monitor.method,
         headers: monitor.headers as any,
         body: monitor.body,
@@ -76,7 +78,7 @@ export async function getStatus(
 
       if (monitor.responseKeyword || monitor.responseForbiddenKeyword) {
         // Only read response body if we have a keyword to check
-        const responseBody = await response.text()
+        const responseBody: string = await response.text()
 
         // MUST contain responseKeyword
         if (monitor.responseKeyword && !responseBody.includes(monitor.responseKeyword)) {
