@@ -38,12 +38,16 @@ function apiResponse(scenario, url) {
     if (scenario === 'zone-errors') return Response.json({ success: false, errors: [{ message: 'denied' }, {}] })
     if (scenario === 'zone-errors-empty') return Response.json({ success: false })
     if (scenario === 'zone-not-found') return Response.json({ success: true, result: [] })
+    if (scenario === 'zone-missing-result') return Response.json({ success: true })
     return Response.json({ success: true, result: [{ id: 'zone', name: 'example.test' }] })
   }
   if (scenario === 'packs-http') return new Response('', { status: 503 })
   if (scenario === 'packs-errors') return Response.json({ success: false, errors: [{ message: 'denied' }] })
   if (scenario === 'packs-errors-empty') return Response.json({ success: false })
   if (scenario === 'missing-result') return Response.json({ success: true })
+  if (scenario === 'active-no-expiry') {
+    return Response.json({ success: true, result: [{ hosts: ['www.example.test'], status: 'active', certificates: [{ hosts: ['www.example.test'], status: 'active' }] }] })
+  }
   if (scenario === 'invalid-expiry') {
     return Response.json({
       success: true,
@@ -83,10 +87,12 @@ describe('Cloudflare edge certificate fallback', () => {
       'zone-errors',
       'zone-errors-empty',
       'zone-not-found',
+      'zone-missing-result',
       'packs-http',
       'packs-errors',
       'packs-errors-empty',
       'missing-result',
+      'active-no-expiry',
       'invalid-expiry',
     ]) {
       scenario = caseName
@@ -120,7 +126,7 @@ describe('Cloudflare edge certificate fallback', () => {
         ],
       })
     })
-    const result = await getStatus(monitor, token)
+    const result = await getStatus(monitor, { apiToken: 'test-token' })
     assert.equal(result.certificate.status, 'warning')
     assert.equal(result.certificate.daysRemaining, 10)
   })
