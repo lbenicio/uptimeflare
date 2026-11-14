@@ -4,14 +4,14 @@
   "private": true,
   "scripts": {
     "start:dev": "next dev",
-    "deploy:cf": "node scripts/set-wrangler-d1-id.mjs \"$UPTIMEFLARE_D1_DATABASE_ID\" && opennextjs-cloudflare build && opennextjs-cloudflare deploy",
-    "upload:cf": "node scripts/set-wrangler-d1-id.mjs \"$UPTIMEFLARE_D1_DATABASE_ID\" && opennextjs-cloudflare build && opennextjs-cloudflare upload",
-    "build:pkg": "next build",
     "start:prod": "next start",
+    "build:pkg": "next build",
     "fmt:lint": "next lint",
     "deps:install": "npm install --verbose --no-fund --no-audit",
     "deps:ci": "npm ci --verbose --no-fund --no-audit",
-    "deps:update": "npm-check-updates -u && npm run deps:install"
+    "deps:update": "npm-check-updates -u && npm run deps:install",
+    "cf:deploy": "node scripts/set-wrangler-d1-id.mjs \"$UPTIMEFLARE_D1_DATABASE_ID\" && opennextjs-cloudflare build && opennextjs-cloudflare deploy",
+    "cf:upload": "node scripts/set-wrangler-d1-id.mjs \"$UPTIMEFLARE_D1_DATABASE_ID\" && opennextjs-cloudflare build && opennextjs-cloudflare upload"
   },
   "dependencies": {
     "@cloudflare/workers-types": "^5.20261114.1",
