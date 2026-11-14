@@ -26,7 +26,10 @@ mock.module('node:tls', {
       if (tlsBehavior.error) {
         process.nextTick(() => socket.emit('error', tlsBehavior.error))
       } else if (tlsBehavior.noEvent !== true) {
-        process.nextTick(() => socket.emit('secureConnect'))
+        process.nextTick(() => {
+          socket.emit('secureConnect')
+          if (tlsBehavior.lateError) socket.emit('error', new Error('late socket error'))
+        })
       }
       return socket
     },
@@ -126,6 +129,13 @@ describe('monitor endpoint checks', () => {
     assert.equal(status.err, 'Timeout after 25ms')
   })
 
+  it('rejects an invalid HTTP status below 200', async (t) => {
+    t.mock.method(globalThis, 'fetch', async () => ({ status: 199, text: async () => '' }))
+    const status = await getStatus({ ...baseMonitor, certificateExpiryWarningDays: undefined })
+    assert.equal(status.up, false)
+    assert.match(status.err, /Got: 199/)
+  })
+
   it('reports other fetch errors', async (t) => {
     t.mock.method(globalThis, 'fetch', async () => { throw new Error('offline') })
     const status = await getStatus({ ...baseMonitor, certificateExpiryWarningDays: undefined })
@@ -157,6 +167,13 @@ describe('monitor endpoint checks', () => {
 })
 
 describe('TLS certificate checks', () => {
+  it('ignores a late TLS event after the handshake has completed', async (t) => {
+    tlsBehavior.lateError = true
+    const status = await runStatus(t)
+    assert.equal(status.certificate.status, 'valid')
+    assert.equal(lastSocket.destroyCalls, 1)
+  })
+
   it('validates a trusted certificate and uses SNI for DNS names', async (t) => {
     const status = await runStatus(t)
     assert.equal(status.certificate.status, 'valid')
@@ -183,6 +200,15 @@ describe('TLS certificate checks', () => {
     assert.equal(status.certificate.status, 'warning')
     assert.equal(status.certificate.daysRemaining, 3)
     assert.match(status.certificate.error, /expires soon/)
+  })
+
+  it('rejects a certificate when only its expiry date is invalid', async (t) => {
+    tlsBehavior.certificate = {
+      valid_from: new Date(Date.now() - 86400000).toUTCString(),
+      valid_to: 'invalid',
+    }
+    const status = await runStatus(t)
+    assert.equal(status.certificate.status, 'invalid')
   })
 
   it('rejects certificates with invalid validity dates', async (t) => {
@@ -255,6 +281,12 @@ describe('TLS certificate checks', () => {
     assert.match(status.certificate.error, /TLS connection failed/)
   })
 
+  it('handles TLS errors without an error code', async (t) => {
+    tlsBehavior.error = new Error('unexpected TLS failure')
+    const status = await runStatus(t)
+    assert.equal(status.certificate.status, 'unavailable')
+  })
+
   it('classifies ordinary TLS socket errors as unavailable', async (t) => {
     tlsBehavior.error = Object.assign(new Error('connection refused'), { code: 'ECONNREFUSED' })
     const status = await runStatus(t)
@@ -266,6 +298,12 @@ describe('TLS certificate checks', () => {
     const status = await runStatus(t, { ...baseMonitor, timeout: 5 })
     assert.equal(status.certificate.status, 'unavailable')
     assert.match(status.certificate.error, /timed out/)
+  })
+
+  it('reports malformed targets as unavailable certificate checks', async (t) => {
+    const status = await runStatus(t, { ...baseMonitor, target: 'not a URL' })
+    assert.equal(status.certificate.status, 'unavailable')
+    assert.match(status.certificate.error, /Invalid URL/)
   })
 
   it('reports non-HTTPS targets as an unavailable certificate check', async (t) => {
