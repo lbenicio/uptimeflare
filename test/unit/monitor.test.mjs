@@ -253,6 +253,13 @@ describe('TLS certificate checks', () => {
     assert.match(status.certificate.error, /self-signed certificate/)
   })
 
+  it('uses a fallback reason when an unauthorized socket has no authorization error', async (t) => {
+    tlsBehavior.authorized = false
+    const status = await runStatus(t)
+    assert.equal(status.certificate.status, 'invalid')
+    assert.match(status.certificate.error, /unknown error/)
+  })
+
   it('rejects a TLS connection that has no peer certificate', async (t) => {
     tlsBehavior.certificate = {}
     const status = await runStatus(t)
