@@ -33,9 +33,7 @@ mock.module('node:tls', {
     checkServerIdentity: (hostname, certificate) => identityCheck(hostname, certificate),
   },
 })
-mock.module('cloudflare:sockets', {
-  namedExports: { connect: (...args) => socketsConnect(...args) },
-})
+globalThis.__uptimeflareSocketsConnect = (...args) => socketsConnect(...args)
 
 beforeEach(() => {
   tlsBehavior = {}
@@ -54,7 +52,7 @@ const baseMonitor = {
 }
 
 function response(body = 'ok', status = 200) {
-  return new Response(body, { status })
+  return new Response(status === 204 ? null : body, { status })
 }
 
 async function runStatus(t, monitor = baseMonitor, cloudflare) {
@@ -264,7 +262,7 @@ describe('TLS certificate checks', () => {
     const calls = []
     t.mock.method(globalThis, 'fetch', async (url, options = {}) => {
       calls.push({ url: String(url), options })
-      if (String(url) === baseMonitor.target) return response()
+      if (String(url) === 'https://www.example.test') return response()
       if (String(url).includes('/zones?')) {
         return Response.json({ success: true, result: [{ id: 'zone/id', name: 'example.test' }] })
       }
@@ -279,7 +277,7 @@ describe('TLS certificate checks', () => {
       })
     })
     const status = await getStatus(
-      { ...baseMonitor, certificateZoneName: 'example.test' },
+      { ...baseMonitor, target: 'https://www.example.test', certificateZoneName: 'example.test' },
       { CLOUDFLARE_API_TOKEN: 'test-token' },
     )
     assert.equal(status.certificate.status, 'valid')
