@@ -161,7 +161,7 @@ const workerConfig: WorkerConfig = {
       // `id` should be unique, history will be kept if the `id` remains constant
       id: 'apps',
       // `name` is used at status page and callback message
-      name: 'apple application developed by me',
+      name: 'Applications',
       // `method` should be an HTTP method, TCP_PING, or SSL_CERT
       method: 'GET',
       // `target` is a valid URL
