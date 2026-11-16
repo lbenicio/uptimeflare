@@ -1,4 +1,4 @@
-import { workerConfig, maintenances } from '../../uptime.config'
+import { maintenances, workerConfig } from '../../uptime.config'
 import { formatStatusChangeNotification, getWorkerLocation, notifyWithApprise } from './util'
 import { MonitorState, MonitorTarget } from '../../types/config'
 import { getStatus } from './monitor'
@@ -355,9 +355,7 @@ export class RemoteChecker extends DurableObject {
     this.env = env
   }
 
-  async getLocationAndStatus(
-    monitor: MonitorTarget
-  ): Promise<{
+  async getLocationAndStatus(monitor: MonitorTarget): Promise<{
     location: string
     status: {
       ping: number

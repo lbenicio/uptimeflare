@@ -272,4 +272,4 @@ const workerConfig: WorkerConfig = {
 const maintenances: MaintenanceConfig[] = []
 
 // Don't forget this, otherwise compilation fails.
-export { pageConfig, workerConfig, maintenances }
+export { maintenances, pageConfig, workerConfig }

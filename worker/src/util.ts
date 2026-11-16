@@ -111,9 +111,9 @@ async function notifyWithApprise(
 }
 
 export {
-  getWorkerLocation,
   fetchTimeout,
-  withTimeout,
-  notifyWithApprise,
   formatStatusChangeNotification,
+  getWorkerLocation,
+  notifyWithApprise,
+  withTimeout,
 }

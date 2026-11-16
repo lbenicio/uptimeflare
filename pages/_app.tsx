@@ -1,6 +1,6 @@
 import '@mantine/core/styles.css'
 import type { AppProps } from 'next/app'
-import { MantineProvider, localStorageColorSchemeManager } from '@mantine/core'
+import { localStorageColorSchemeManager, MantineProvider } from '@mantine/core'
 import NoSsr from '@/components/NoSsr'
 import '@/styles/globals.css'
 

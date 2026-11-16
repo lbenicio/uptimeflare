@@ -1,6 +1,6 @@
 import type { MonitorTarget } from '../../types/config'
 import type { Status } from './types/status.type'
-import { withTimeout, fetchTimeout } from './util'
+import { fetchTimeout, withTimeout } from './util'
 import { isIP } from 'node:net'
 import { checkServerIdentity, connect as tlsConnect } from 'node:tls'
 import type { CertificateCheck } from '../../types/config'

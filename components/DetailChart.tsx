@@ -1,14 +1,14 @@
 import { Line } from 'react-chartjs-2'
 import {
-  Chart as ChartJS,
   CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
+  Chart as ChartJS,
   Tooltip as ChartTooltip,
   Legend,
+  LinearScale,
+  LineElement,
+  PointElement,
   TimeScale,
+  Title,
 } from 'chart.js'
 import 'chartjs-adapter-moment'
 import { MonitorState, MonitorTarget } from '@/types/config'
