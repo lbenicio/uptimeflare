@@ -7,7 +7,7 @@
     "start:prod": "next start",
     "start:preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "build:pkg": "next build",
-    "fmt:lint": "eslint .",
+    "fmt:lint": "eslint --fix .",
     "fmt:format": "prettier --write .",
     "deps:install": "npm install --verbose --no-fund --no-audit",
     "deps:ci": "npm ci --verbose --no-fund --no-audit",
