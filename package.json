@@ -16,6 +16,7 @@
     "test:e2e": "node --test test/e2e/*.test.mjs",
     "test": "npm run test:unit && npm run test:e2e",
     "build": "npm run build:pkg",
+    "start": "npm run start:prod"
   },
   "dependencies": {
     "@cloudflare/workers-types": "^5.20261114.1",
