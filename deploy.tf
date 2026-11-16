@@ -21,6 +21,25 @@ resource "cloudflare_d1_database" "uptimeflare" {
   name       = "uptimeflare_state"
 }
 
+# This Worker was created with the legacy v1 Durable Object migration.
+data "cloudflare_workers_scripts" "uptimeflare" {
+  account_id = var.CLOUDFLARE_ACCOUNT_ID
+}
+
+locals {
+  uptimeflare_migration_tag = try(one([
+    for script in data.cloudflare_workers_scripts.uptimeflare.result : script.migration_tag
+    if script.id == "uptimeflare_worker"
+  ]), null)
+
+  # Apply the v1 -> v2 removal once; later deployments omit the write-only migration.
+  uptimeflare_migrations = local.uptimeflare_migration_tag == "v1" ? {
+    old_tag         = "v1"
+    new_tag         = "v2"
+    deleted_classes = ["RemoteChecker"]
+  } : null
+}
+
 resource "cloudflare_workers_script" "uptimeflare" {
   account_id          = var.CLOUDFLARE_ACCOUNT_ID
   script_name         = "uptimeflare_worker"
@@ -40,14 +59,8 @@ resource "cloudflare_workers_script" "uptimeflare" {
     }
   ]
 
-  # Cloudflare applies this tombstone once, then reports it as stale/removable.
   # Deletion permanently removes the legacy namespace and its storage.
-  exports = {
-    RemoteChecker = {
-      type  = "durable-object"
-      state = "deleted"
-    }
-  }
+  migrations = local.uptimeflare_migrations
 }
 
 resource "cloudflare_workers_cron_trigger" "uptimeflare_worker_cron" {
