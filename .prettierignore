@@ -1,0 +1,12 @@
+node_modules/
+**/node_modules/
+.next/
+.open-next/
+out/
+build/
+coverage/
+.wrangler/
+worker/dist/
+worker/worker-configuration.d.ts
+**/package-lock.json
+mock/state.json

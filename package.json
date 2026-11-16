@@ -5,8 +5,10 @@
   "scripts": {
     "start:dev": "next dev",
     "start:prod": "next start",
+    "start:preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "build:pkg": "next build",
-    "fmt:lint": "next lint",
+    "fmt:lint": "eslint .",
+    "fmt:format": "prettier --write .",
     "deps:install": "npm install --verbose --no-fund --no-audit",
     "deps:ci": "npm ci --verbose --no-fund --no-audit",
     "deps:update": "npm-check-updates -u && npm run deps:install",
@@ -49,7 +51,7 @@
     "postcss-preset-mantine": "^1.18.0",
     "postcss-simple-vars": "^7.0.1",
     "prettier": "3.10.1",
-    "typescript": "^7.0.2",
+    "typescript": "^6.0.3",
     "wrangler": "^4.162.0"
   }
 }
