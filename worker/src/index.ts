@@ -40,7 +40,7 @@ const Worker = {
             new Date(timeNow * 1000) >= new Date(m.start) &&
             (!m.end || new Date(timeNow * 1000) <= new Date(m.end))
         )
-        .map((e) => (e.monitors || []))
+        .map((e) => e.monitors || [])
         .flat()
 
       if (maintenanceList.includes(monitor.id)) {
@@ -119,7 +119,15 @@ const Worker = {
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify(monitor),
                 })
-              ).json<{ location: string; status: { ping: number; up: boolean; err: string; certificate?: import('../../types/config').CertificateCheck } }>()
+              ).json<{
+                location: string
+                status: {
+                  ping: number
+                  up: boolean
+                  err: string
+                  certificate?: import('../../types/config').CertificateCheck
+                }
+              }>()
             }
             checkLocation = resp.location
             status = resp.status
@@ -349,7 +357,15 @@ export class RemoteChecker extends DurableObject {
 
   async getLocationAndStatus(
     monitor: MonitorTarget
-  ): Promise<{ location: string; status: { ping: number; up: boolean; err: string; certificate?: import('../../types/config').CertificateCheck } }> {
+  ): Promise<{
+    location: string
+    status: {
+      ping: number
+      up: boolean
+      err: string
+      certificate?: import('../../types/config').CertificateCheck
+    }
+  }> {
     const colo = (await getWorkerLocation()) as string
     console.log(`Running remote checker (DurableObject) at ${colo}...`)
     const status = await getStatus(monitor, this.env)

@@ -28,46 +28,73 @@ const monitor = {
 const token = { CLOUDFLARE_API_TOKEN: 'test-token' }
 
 beforeEach(() => {
-  tlsError = Object.assign(new Error('Cannot connect to the specified address'), { code: 'EHOSTUNREACH' })
+  tlsError = Object.assign(new Error('Cannot connect to the specified address'), {
+    code: 'EHOSTUNREACH',
+  })
 })
 
 function apiResponse(scenario, url) {
   if (String(url) === monitor.target) return new Response('ok')
   if (String(url).includes('/zones?')) {
     if (scenario === 'zone-http') return new Response('', { status: 503 })
-    if (scenario === 'zone-errors') return Response.json({ success: false, errors: [{ message: 'denied' }, {}] })
+    if (scenario === 'zone-errors')
+      return Response.json({ success: false, errors: [{ message: 'denied' }, {}] })
     if (scenario === 'zone-errors-empty') return Response.json({ success: false })
     if (scenario === 'zone-not-found') return Response.json({ success: true, result: [] })
     if (scenario === 'zone-missing-result') return Response.json({ success: true })
     return Response.json({ success: true, result: [{ id: 'zone', name: 'example.test' }] })
   }
   if (scenario === 'packs-http') return new Response('', { status: 503 })
-  if (scenario === 'packs-errors') return Response.json({ success: false, errors: [{ message: 'denied' }] })
+  if (scenario === 'packs-errors')
+    return Response.json({ success: false, errors: [{ message: 'denied' }] })
   if (scenario === 'packs-errors-empty') return Response.json({ success: false })
   if (scenario === 'missing-result') return Response.json({ success: true })
   if (scenario === 'active-no-expiry') {
-    return Response.json({ success: true, result: [{ hosts: ['www.example.test'], status: 'active', certificates: [{ hosts: ['www.example.test'], status: 'active' }] }] })
+    return Response.json({
+      success: true,
+      result: [
+        {
+          hosts: ['www.example.test'],
+          status: 'active',
+          certificates: [{ hosts: ['www.example.test'], status: 'active' }],
+        },
+      ],
+    })
   }
   if (scenario === 'invalid-expiry') {
     return Response.json({
       success: true,
-      result: [{ hosts: ['www.example.test'], status: 'active', certificates: [{ expires_on: 'invalid' }] }],
+      result: [
+        {
+          hosts: ['www.example.test'],
+          status: 'active',
+          certificates: [{ expires_on: 'invalid' }],
+        },
+      ],
     })
   }
   if (scenario === 'expired-edge-cert') {
     return Response.json({
       success: true,
-      result: [{
-        hosts: ['www.example.test'],
-        status: 'active',
-        certificates: [{ expires_on: new Date(Date.now() + 2 * 86400000).toISOString() }],
-      }],
+      result: [
+        {
+          hosts: ['www.example.test'],
+          status: 'active',
+          certificates: [{ expires_on: new Date(Date.now() + 2 * 86400000).toISOString() }],
+        },
+      ],
     })
   }
   if (scenario === 'wildcard-apex') {
     return Response.json({
       success: true,
-      result: [{ hosts: ['*.example.test'], status: 'active', certificates: [{ expires_on: new Date(Date.now() + 365 * 86400000).toISOString() }] }],
+      result: [
+        {
+          hosts: ['*.example.test'],
+          status: 'active',
+          certificates: [{ expires_on: new Date(Date.now() + 365 * 86400000).toISOString() }],
+        },
+      ],
     })
   }
   return Response.json({ success: true, result: [] })
@@ -111,7 +138,8 @@ describe('Cloudflare edge certificate fallback', () => {
     t.mock.method(globalThis, 'fetch', async (url) => {
       const value = String(url)
       if (value === monitor.target) return new Response('ok')
-      if (value.includes('/zones?')) return Response.json({ success: true, result: [{ id: 'zone', name: 'example.test' }] })
+      if (value.includes('/zones?'))
+        return Response.json({ success: true, result: [{ id: 'zone', name: 'example.test' }] })
       return Response.json({
         success: true,
         result: [
@@ -126,7 +154,10 @@ describe('Cloudflare edge certificate fallback', () => {
         ],
       })
     })
-    const result = await getStatus({ ...monitor, timeout: 100, certificateExpiryWarningDays: null }, { apiToken: 'test-token' })
+    const result = await getStatus(
+      { ...monitor, timeout: 100, certificateExpiryWarningDays: null },
+      { apiToken: 'test-token' }
+    )
     assert.equal(result.certificate.status, 'warning')
     assert.equal(result.certificate.daysRemaining, 10)
   })
@@ -136,7 +167,8 @@ describe('Cloudflare edge certificate fallback', () => {
     t.mock.method(globalThis, 'fetch', async (url) => {
       const value = String(url)
       if (value === monitor.target) return new Response('ok')
-      if (value.includes('/zones?')) return Response.json({ success: true, result: [{ id: 'zone', name: 'example.test' }] })
+      if (value.includes('/zones?'))
+        return Response.json({ success: true, result: [{ id: 'zone', name: 'example.test' }] })
       const page = new URL(value).searchParams.get('page')
       pages.push(Number(page))
       const expires = new Date(Date.now() + 365 * 86400000).toISOString()
@@ -153,11 +185,13 @@ describe('Cloudflare edge certificate fallback', () => {
       }
       return Response.json({
         success: true,
-        result: [{
-          hosts: ['www.example.test'],
-          status: 'active',
-          certificates: [{ hosts: ['www.example.test'], status: 'active', expires_on: expires }],
-        }],
+        result: [
+          {
+            hosts: ['www.example.test'],
+            status: 'active',
+            certificates: [{ hosts: ['www.example.test'], status: 'active', expires_on: expires }],
+          },
+        ],
         result_info: { total_pages: 2 },
       })
     })
@@ -171,11 +205,18 @@ describe('Cloudflare edge certificate fallback', () => {
     t.mock.method(globalThis, 'fetch', async (url) => {
       const value = String(url)
       if (value === monitor.target) return new Response('ok')
-      if (value.includes('/zones?')) return Response.json({ success: true, result: [{ id: 'zone', name: 'example.test' }] })
+      if (value.includes('/zones?'))
+        return Response.json({ success: true, result: [{ id: 'zone', name: 'example.test' }] })
       pageRequests += 1
       return Response.json({
         success: true,
-        result: [{ hosts: ['www.example.test'], status: 'active', certificates: [{ expires_on: new Date(Date.now() + 365 * 86400000).toISOString() }] }],
+        result: [
+          {
+            hosts: ['www.example.test'],
+            status: 'active',
+            certificates: [{ expires_on: new Date(Date.now() + 365 * 86400000).toISOString() }],
+          },
+        ],
         result_info: { total_pages: 10 },
       })
     })
@@ -189,7 +230,8 @@ describe('Cloudflare edge certificate fallback', () => {
     t.mock.method(globalThis, 'fetch', async (url) => {
       const value = String(url)
       if (value === monitor.target) return new Response('ok')
-      if (value.includes('/zones?')) return Response.json({ success: true, result: [{ id: 'zone', name: 'example.test' }] })
+      if (value.includes('/zones?'))
+        return Response.json({ success: true, result: [{ id: 'zone', name: 'example.test' }] })
       pageRequests += 1
       return Response.json({
         success: true,
@@ -207,7 +249,10 @@ describe('Cloudflare edge certificate fallback', () => {
   })
 
   it('does not treat a wildcard edge certificate as matching the zone apex', async (t) => {
-    const result = await edgeCheck(t, 'wildcard-apex', { ...monitor, target: 'https://example.test' })
+    const result = await edgeCheck(t, 'wildcard-apex', {
+      ...monitor,
+      target: 'https://example.test',
+    })
     assert.equal(result.certificate.status, 'unavailable')
   })
 })

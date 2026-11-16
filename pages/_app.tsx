@@ -9,10 +9,7 @@ const colorSchemeManager = localStorageColorSchemeManager({ key: 'uptimeflare-co
 export default function App({ Component, pageProps }: AppProps) {
   return (
     <NoSsr>
-      <MantineProvider
-        colorSchemeManager={colorSchemeManager}
-        defaultColorScheme="auto"
-      >
+      <MantineProvider colorSchemeManager={colorSchemeManager} defaultColorScheme="auto">
         <Component {...pageProps} />
       </MantineProvider>
     </NoSsr>

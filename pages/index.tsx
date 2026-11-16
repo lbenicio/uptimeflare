@@ -72,7 +72,9 @@ export default function Home({
         <footer className={classes.footer}>
           <div className={classes.footerInner}>
             <div className={classes.footerBrand}>
-              <span className={classes.footerMark} aria-hidden="true">U</span>
+              <span className={classes.footerMark} aria-hidden="true">
+                U
+              </span>
               <span className={classes.footerBrandText}>
                 <span className={classes.footerTitle}>UptimeFlare</span>
                 <span className={classes.footerCaption}>Live service status</span>

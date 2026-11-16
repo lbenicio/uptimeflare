@@ -1,6 +1,6 @@
 import type { MonitorTarget } from '../../types/config'
-import type { Status } from './types/status.type';
-import { withTimeout, fetchTimeout } from './util';
+import type { Status } from './types/status.type'
+import { withTimeout, fetchTimeout } from './util'
 import { isIP } from 'node:net'
 import { checkServerIdentity, connect as tlsConnect } from 'node:tls'
 import type { CertificateCheck } from '../../types/config'
@@ -267,10 +267,7 @@ function checkCertificate(
             remoteStatus.daysRemaining
           )
         } catch (remoteError: any) {
-          finish(
-            'unavailable',
-            `Cloudflare edge certificate check failed: ${remoteError.message}`
-          )
+          finish('unavailable', `Cloudflare edge certificate check failed: ${remoteError.message}`)
         }
         return
       }
@@ -336,7 +333,8 @@ async function checkCloudflareEdgeCertificate(
       Accept: 'application/json',
     },
   })
-  if (!zonesResponse.ok) throw new Error(`Cloudflare Zones API returned HTTP ${zonesResponse.status}`)
+  if (!zonesResponse.ok)
+    throw new Error(`Cloudflare Zones API returned HTTP ${zonesResponse.status}`)
 
   const zonesPayload = (await zonesResponse.json()) as {
     success: boolean
@@ -344,7 +342,12 @@ async function checkCloudflareEdgeCertificate(
     result?: { id: string; name: string }[]
   }
   if (!zonesPayload.success) {
-    throw new Error(zonesPayload.errors?.map((item) => item.message).filter(Boolean).join('; ') || 'Cloudflare Zones API request failed')
+    throw new Error(
+      zonesPayload.errors
+        ?.map((item) => item.message)
+        .filter(Boolean)
+        .join('; ') || 'Cloudflare Zones API request failed'
+    )
   }
   const zone = zonesPayload.result?.find((result) => result.name === zoneName)
   if (!zone) throw new Error(`Cloudflare zone ${zoneName} was not found for this API token`)
@@ -369,7 +372,12 @@ async function checkCloudflareEdgeCertificate(
 
     const payload = (await response.json()) as CertificatePackResponse
     if (!payload.success) {
-      throw new Error(payload.errors?.map((item) => item.message).filter(Boolean).join('; ') || 'Cloudflare API request failed')
+      throw new Error(
+        payload.errors
+          ?.map((item) => item.message)
+          .filter(Boolean)
+          .join('; ') || 'Cloudflare API request failed'
+      )
     }
     packs.push(...(payload.result ?? []))
     const totalPages = payload.result_info?.total_pages ?? page
@@ -384,7 +392,7 @@ async function checkCloudflareEdgeCertificate(
     (pack.certificates ?? [])
       .map((certificate) => ({
         ...certificate,
-        hosts: certificate.hosts?.length ? certificate.hosts : pack.hosts ?? [],
+        hosts: certificate.hosts?.length ? certificate.hosts : (pack.hosts ?? []),
         status: certificate.status ?? pack.status,
       }))
       .filter((certificate) => (certificate.hosts ?? []).some(matchesHostname))

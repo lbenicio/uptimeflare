@@ -30,7 +30,9 @@
   border-radius: 3px;
   opacity: 0.82;
   cursor: default;
-  transition: opacity 120ms ease, transform 120ms ease;
+  transition:
+    opacity 120ms ease,
+    transform 120ms ease;
 }
 
 .day[data-has-incidents='true'] {

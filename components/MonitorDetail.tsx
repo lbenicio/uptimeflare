@@ -31,7 +31,11 @@ export default function MonitorDetail({
   const certificateMarker =
     monitor.certificateExpiryWarningDays === undefined ? null : (
       <Tooltip label={certificate?.error || certificateText}>
-        <span className={classes.certificateMarker} data-status={certificateStatus} aria-label={certificateText}>
+        <span
+          className={classes.certificateMarker}
+          data-status={certificateStatus}
+          aria-label={certificateText}
+        >
           TLS
         </span>
       </Tooltip>
@@ -45,7 +49,8 @@ export default function MonitorDetail({
           {certificateMarker}
         </Text>
         <Text className={classes.noData}>
-          No monitor history is available yet. Check that your worker has deployed the latest config.
+          No monitor history is available yet. Check that your worker has deployed the latest
+          config.
         </Text>
       </div>
     )

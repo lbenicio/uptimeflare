@@ -25,7 +25,9 @@ export default function MonitorList({
     <section className={classes.section} aria-labelledby="services-heading">
       <div className={classes.sectionHeading}>
         <div>
-          <h2 id="services-heading" className={classes.title}>Monitored services</h2>
+          <h2 id="services-heading" className={classes.title}>
+            Monitored services
+          </h2>
           <p className={classes.description}>Service health and uptime over the last 90 days.</p>
         </div>
         <Text className={classes.count}>
@@ -40,14 +42,20 @@ export default function MonitorList({
             const groupMonitors = monitors
               .filter((monitor) => ids.includes(monitor.id))
               .sort((a, b) => ids.indexOf(a.id) - ids.indexOf(b.id))
-            const downCount = countDownCount(state, groupMonitors.map((monitor) => monitor.id))
+            const downCount = countDownCount(
+              state,
+              groupMonitors.map((monitor) => monitor.id)
+            )
 
             return (
               <Accordion.Item key={groupName} value={groupName} className={classes.group}>
                 <Accordion.Control>
                   <span className={classes.groupHeading}>
                     <span className={classes.groupName}>{groupName}</span>
-                    <span className={classes.groupStatus} data-status={downCount > 0 ? 'issue' : 'up'}>
+                    <span
+                      className={classes.groupStatus}
+                      data-status={downCount > 0 ? 'issue' : 'up'}
+                    >
                       <span className={classes.statusDot} />
                       {groupMonitors.length - downCount} / {groupMonitors.length} operational
                     </span>

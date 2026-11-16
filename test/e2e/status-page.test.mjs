@@ -9,9 +9,13 @@ let output = ''
 
 async function getFreePort() {
   const server = createServer()
-  await new Promise((resolve, reject) => server.listen(0, '127.0.0.1', resolve).once('error', reject))
+  await new Promise((resolve, reject) =>
+    server.listen(0, '127.0.0.1', resolve).once('error', reject)
+  )
   const { port } = server.address()
-  await new Promise((resolve, reject) => server.close((error) => error ? reject(error) : resolve()))
+  await new Promise((resolve, reject) =>
+    server.close((error) => (error ? reject(error) : resolve()))
+  )
   return port
 }
 
@@ -20,7 +24,9 @@ async function waitForServer(url, processRef, getOutput) {
   let lastError
   while (Date.now() < deadline) {
     if (processRef.exitCode !== null) {
-      throw new Error(`Next.js exited before becoming ready (code ${processRef.exitCode}).\n${getOutput()}`)
+      throw new Error(
+        `Next.js exited before becoming ready (code ${processRef.exitCode}).\n${getOutput()}`
+      )
     }
     try {
       const response = await fetch(url)
@@ -34,28 +40,42 @@ async function waitForServer(url, processRef, getOutput) {
 }
 
 describe('Uptimeflare web app end-to-end', () => {
-  before(async () => {
-    const port = await getFreePort()
-    baseUrl = `http://127.0.0.1:${port}`
-    serverProcess = spawn(
-      process.execPath,
-      ['node_modules/next/dist/bin/next', 'dev', '--hostname', '127.0.0.1', '--port', String(port)],
-      {
-        cwd: process.cwd(),
-        env: {
-          ...process.env,
-          NODE_ENV: 'development',
-          NEXT_TELEMETRY_DISABLED: '1',
-        },
-        stdio: ['ignore', 'pipe', 'pipe'],
-      },
-    )
-    serverProcess.stdout.setEncoding('utf8')
-    serverProcess.stderr.setEncoding('utf8')
-    serverProcess.stdout.on('data', (chunk) => { output += chunk })
-    serverProcess.stderr.on('data', (chunk) => { output += chunk })
-    await waitForServer(`${baseUrl}/api/data`, serverProcess, () => output)
-  }, { timeout: 120000 })
+  before(
+    async () => {
+      const port = await getFreePort()
+      baseUrl = `http://127.0.0.1:${port}`
+      serverProcess = spawn(
+        process.execPath,
+        [
+          'node_modules/next/dist/bin/next',
+          'dev',
+          '--hostname',
+          '127.0.0.1',
+          '--port',
+          String(port),
+        ],
+        {
+          cwd: process.cwd(),
+          env: {
+            ...process.env,
+            NODE_ENV: 'development',
+            NEXT_TELEMETRY_DISABLED: '1',
+          },
+          stdio: ['ignore', 'pipe', 'pipe'],
+        }
+      )
+      serverProcess.stdout.setEncoding('utf8')
+      serverProcess.stderr.setEncoding('utf8')
+      serverProcess.stdout.on('data', (chunk) => {
+        output += chunk
+      })
+      serverProcess.stderr.on('data', (chunk) => {
+        output += chunk
+      })
+      await waitForServer(`${baseUrl}/api/data`, serverProcess, () => output)
+    },
+    { timeout: 120000 }
+  )
 
   after(() => {
     if (serverProcess && serverProcess.exitCode === null) {

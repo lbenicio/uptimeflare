@@ -16,12 +16,17 @@ mock.module('node:tls', {
       socket.authorized = tlsBehavior.authorized ?? true
       socket.authorizationError = tlsBehavior.authorizationError
       socket.destroyCalls = 0
-      socket.destroy = () => { socket.destroyCalls += 1 }
-      socket.getPeerCertificate = () => Object.hasOwn(tlsBehavior, 'certificate') ? tlsBehavior.certificate : {
-        valid_from: new Date(Date.now() - 86400000).toUTCString(),
-        valid_to: new Date(Date.now() + 365 * 86400000).toUTCString(),
-        subject: { CN: 'example.test' },
+      socket.destroy = () => {
+        socket.destroyCalls += 1
       }
+      socket.getPeerCertificate = () =>
+        Object.hasOwn(tlsBehavior, 'certificate')
+          ? tlsBehavior.certificate
+          : {
+              valid_from: new Date(Date.now() - 86400000).toUTCString(),
+              valid_to: new Date(Date.now() + 365 * 86400000).toUTCString(),
+              subject: { CN: 'example.test' },
+            }
       lastSocket = socket
       if (tlsBehavior.error) {
         process.nextTick(() => socket.emit('error', tlsBehavior.error))
@@ -99,31 +104,53 @@ describe('monitor endpoint checks', () => {
 
   it('checks required response keywords', async (t) => {
     t.mock.method(globalThis, 'fetch', async () => response('service ready'))
-    const ok = await getStatus({ ...baseMonitor, responseKeyword: 'ready', certificateExpiryWarningDays: undefined })
+    const ok = await getStatus({
+      ...baseMonitor,
+      responseKeyword: 'ready',
+      certificateExpiryWarningDays: undefined,
+    })
     assert.equal(ok.up, true)
 
-    const missing = await getStatus({ ...baseMonitor, responseKeyword: 'healthy', certificateExpiryWarningDays: undefined })
+    const missing = await getStatus({
+      ...baseMonitor,
+      responseKeyword: 'healthy',
+      certificateExpiryWarningDays: undefined,
+    })
     assert.equal(missing.up, false)
     assert.equal(missing.err, "HTTP response doesn't contain the configured keyword")
   })
 
   it('allows responses when a forbidden keyword is absent', async (t) => {
     t.mock.method(globalThis, 'fetch', async () => response('service healthy'))
-    const status = await getStatus({ ...baseMonitor, responseForbiddenKeyword: 'degraded', certificateExpiryWarningDays: undefined })
+    const status = await getStatus({
+      ...baseMonitor,
+      responseForbiddenKeyword: 'degraded',
+      certificateExpiryWarningDays: undefined,
+    })
     assert.equal(status.up, true)
   })
 
   it('rejects forbidden response keywords', async (t) => {
     t.mock.method(globalThis, 'fetch', async () => response('service degraded'))
-    const status = await getStatus({ ...baseMonitor, responseForbiddenKeyword: 'degraded', certificateExpiryWarningDays: undefined })
+    const status = await getStatus({
+      ...baseMonitor,
+      responseForbiddenKeyword: 'degraded',
+      certificateExpiryWarningDays: undefined,
+    })
     assert.equal(status.up, false)
     assert.equal(status.err, 'HTTP response contains the configured forbidden keyword')
   })
 
   it('reports fetch aborts as monitor timeouts', async (t) => {
     const error = new DOMException('aborted', 'AbortError')
-    t.mock.method(globalThis, 'fetch', async () => { throw error })
-    const status = await getStatus({ ...baseMonitor, timeout: 25, certificateExpiryWarningDays: undefined })
+    t.mock.method(globalThis, 'fetch', async () => {
+      throw error
+    })
+    const status = await getStatus({
+      ...baseMonitor,
+      timeout: 25,
+      certificateExpiryWarningDays: undefined,
+    })
     assert.equal(status.up, false)
     assert.equal(status.ping, 25)
     assert.equal(status.err, 'Timeout after 25ms')
@@ -137,30 +164,56 @@ describe('monitor endpoint checks', () => {
   })
 
   it('reports other fetch errors', async (t) => {
-    t.mock.method(globalThis, 'fetch', async () => { throw new Error('offline') })
+    t.mock.method(globalThis, 'fetch', async () => {
+      throw new Error('offline')
+    })
     const status = await getStatus({ ...baseMonitor, certificateExpiryWarningDays: undefined })
     assert.equal(status.up, false)
     assert.equal(status.err, 'Error: offline')
   })
 
   it('connects to TCP targets and closes successful sockets', async (t) => {
-    socketsConnect = () => ({ opened: Promise.resolve(), close: async () => { socketsConnect.closed = true } })
-    const status = await getStatus({ ...baseMonitor, method: 'TCP_PING', target: 'example.test:443' })
+    socketsConnect = () => ({
+      opened: Promise.resolve(),
+      close: async () => {
+        socketsConnect.closed = true
+      },
+    })
+    const status = await getStatus({
+      ...baseMonitor,
+      method: 'TCP_PING',
+      target: 'example.test:443',
+    })
     assert.equal(status.up, true)
     assert.equal(status.err, '')
     assert.equal(socketsConnect.closed, true)
   })
 
   it('reports TCP socket failures', async (t) => {
-    socketsConnect = () => ({ opened: Promise.reject(new Error('connection refused')), close: async () => {} })
-    const status = await getStatus({ ...baseMonitor, method: 'TCP_PING', target: 'example.test:443' })
+    socketsConnect = () => ({
+      opened: Promise.reject(new Error('connection refused')),
+      close: async () => {},
+    })
+    const status = await getStatus({
+      ...baseMonitor,
+      method: 'TCP_PING',
+      target: 'example.test:443',
+    })
     assert.equal(status.up, false)
     assert.match(status.err, /connection refused/)
   })
 
   it('uses the configured timeout for TCP connection timeouts', async (t) => {
-    socketsConnect = () => ({ opened: Promise.reject(new Error('Promise timed out after 5ms')), close: async () => {} })
-    const status = await getStatus({ ...baseMonitor, method: 'TCP_PING', target: 'example.test:443', timeout: 5 })
+    socketsConnect = () => ({
+      opened: Promise.reject(new Error('Promise timed out after 5ms')),
+      close: async () => {},
+    })
+    const status = await getStatus({
+      ...baseMonitor,
+      method: 'TCP_PING',
+      target: 'example.test:443',
+      timeout: 5,
+    })
     assert.equal(status.up, false)
     assert.equal(status.ping, 5)
   })
@@ -275,8 +328,14 @@ describe('TLS certificate checks', () => {
   })
 
   it('does not use the Cloudflare fallback for non-default TLS ports', async (t) => {
-    tlsBehavior.error = Object.assign(new Error('Cannot connect to the specified address'), { code: 'EHOSTUNREACH' })
-    const status = await runStatus(t, { ...baseMonitor, target: 'https://example.test:8443' }, { CLOUDFLARE_API_TOKEN: 'token' })
+    tlsBehavior.error = Object.assign(new Error('Cannot connect to the specified address'), {
+      code: 'EHOSTUNREACH',
+    })
+    const status = await runStatus(
+      t,
+      { ...baseMonitor, target: 'https://example.test:8443' },
+      { CLOUDFLARE_API_TOKEN: 'token' }
+    )
     assert.equal(status.certificate.status, 'unavailable')
     assert.match(status.certificate.error, /TLS connection failed/)
   })
@@ -320,10 +379,9 @@ describe('TLS certificate checks', () => {
   })
 
   it('falls back to the Cloudflare API when Worker TCP sockets cannot reach port 443', async (t) => {
-    tlsBehavior.error = Object.assign(
-      new Error('Cannot connect to the specified address'),
-      { code: 'EHOSTUNREACH' },
-    )
+    tlsBehavior.error = Object.assign(new Error('Cannot connect to the specified address'), {
+      code: 'EHOSTUNREACH',
+    })
     const calls = []
     t.mock.method(globalThis, 'fetch', async (url, options = {}) => {
       calls.push({ url: String(url), options })
@@ -333,41 +391,53 @@ describe('TLS certificate checks', () => {
       }
       return Response.json({
         success: true,
-        result: [{
-          hosts: ['*.example.test'],
-          status: 'active',
-          certificates: [{ expires_on: new Date(Date.now() + 365 * 86400000).toISOString() }],
-        }],
+        result: [
+          {
+            hosts: ['*.example.test'],
+            status: 'active',
+            certificates: [{ expires_on: new Date(Date.now() + 365 * 86400000).toISOString() }],
+          },
+        ],
         result_info: { total_pages: 1 },
       })
     })
     const status = await getStatus(
       { ...baseMonitor, target: 'https://www.example.test', certificateZoneName: 'example.test' },
-      { CLOUDFLARE_API_TOKEN: 'test-token' },
+      { CLOUDFLARE_API_TOKEN: 'test-token' }
     )
     assert.equal(status.certificate.status, 'valid')
     assert.equal(calls.length, 3)
-    assert.ok(calls.slice(1).every(({ options }) => options.headers?.Authorization === 'Bearer test-token'))
+    assert.ok(
+      calls.slice(1).every(({ options }) => options.headers?.Authorization === 'Bearer test-token')
+    )
     assert.match(calls[2].url, /zones%2Fid%2Fssl|zones\/zone%2Fid\/ssl/)
   })
 
   it('returns unavailable when the edge fallback has no API token', async (t) => {
-    tlsBehavior.error = Object.assign(new Error('Cannot connect to the specified address'), { code: 'EHOSTUNREACH' })
+    tlsBehavior.error = Object.assign(new Error('Cannot connect to the specified address'), {
+      code: 'EHOSTUNREACH',
+    })
     const status = await runStatus(t, { ...baseMonitor, certificateZoneName: 'example.test' })
     assert.equal(status.certificate.status, 'unavailable')
     assert.match(status.certificate.error, /CLOUDFLARE_API_TOKEN is required/)
   })
 
   it('returns unavailable when no active edge certificate matches', async (t) => {
-    tlsBehavior.error = Object.assign(new Error('Cannot connect to the specified address'), { code: 'EHOSTUNREACH' })
+    tlsBehavior.error = Object.assign(new Error('Cannot connect to the specified address'), {
+      code: 'EHOSTUNREACH',
+    })
     t.mock.method(globalThis, 'fetch', async (url) => {
       if (String(url) === baseMonitor.target) return response()
-      if (String(url).includes('/zones?')) return Response.json({ success: true, result: [{ id: 'zone', name: 'example.test' }] })
-      return Response.json({ success: true, result: [{ hosts: ['other.test'], status: 'pending' }] })
+      if (String(url).includes('/zones?'))
+        return Response.json({ success: true, result: [{ id: 'zone', name: 'example.test' }] })
+      return Response.json({
+        success: true,
+        result: [{ hosts: ['other.test'], status: 'pending' }],
+      })
     })
     const status = await getStatus(
       { ...baseMonitor, certificateZoneName: 'example.test' },
-      { CLOUDFLARE_API_TOKEN: 'token' },
+      { CLOUDFLARE_API_TOKEN: 'token' }
     )
     assert.equal(status.certificate.status, 'unavailable')
     assert.match(status.certificate.error, /No active Cloudflare edge certificate/)

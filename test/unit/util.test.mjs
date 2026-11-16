@@ -29,9 +29,18 @@ describe('worker utilities', () => {
   })
 
   it('propagates an upstream abort through a local abort signal', async (t) => {
-    t.mock.method(globalThis, 'fetch', (_url, options) => new Promise((_resolve, reject) => {
-      options.signal.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')), { once: true })
-    }))
+    t.mock.method(
+      globalThis,
+      'fetch',
+      (_url, options) =>
+        new Promise((_resolve, reject) => {
+          options.signal.addEventListener(
+            'abort',
+            () => reject(new DOMException('Aborted', 'AbortError')),
+            { once: true }
+          )
+        })
+    )
     const upstream = new AbortController()
     const pending = fetchTimeout('https://example.test', 1000, { signal: upstream.signal })
     upstream.abort()
@@ -40,10 +49,19 @@ describe('worker utilities', () => {
 
   it('aborts fetch when its timeout expires', async (t) => {
     let observedSignal
-    t.mock.method(globalThis, 'fetch', (_url, options) => new Promise((_resolve, reject) => {
-      observedSignal = options.signal
-      options.signal.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')), { once: true })
-    }))
+    t.mock.method(
+      globalThis,
+      'fetch',
+      (_url, options) =>
+        new Promise((_resolve, reject) => {
+          observedSignal = options.signal
+          options.signal.addEventListener(
+            'abort',
+            () => reject(new DOMException('Aborted', 'AbortError')),
+            { once: true }
+          )
+        })
+    )
     await assert.rejects(fetchTimeout('https://example.test', 5), { name: 'AbortError' })
     assert.equal(observedSignal.aborted, true)
   })
@@ -57,13 +75,10 @@ describe('worker utilities', () => {
   })
 
   it('formats a recovery notification', () => {
-    assert.deepEqual(
-      formatStatusChangeNotification({ name: 'API' }, true, 100, 220, 'OK', 'UTC'),
-      {
-        title: '✅ API is up!',
-        body: 'The service is up again after being down for 2 minutes.',
-      },
-    )
+    assert.deepEqual(formatStatusChangeNotification({ name: 'API' }, true, 100, 220, 'OK', 'UTC'), {
+      title: '✅ API is up!',
+      body: 'The service is up again after being down for 2 minutes.',
+    })
   })
 
   it('formats an initial outage notification', () => {
@@ -107,7 +122,9 @@ describe('worker utilities', () => {
   })
 
   it('handles an Apprise network error', async (t) => {
-    t.mock.method(globalThis, 'fetch', async () => { throw new Error('offline') })
+    t.mock.method(globalThis, 'fetch', async () => {
+      throw new Error('offline')
+    })
     await notifyWithApprise('https://apprise.test/notify', 'mailto://x', 'Title', 'Body')
   })
 })

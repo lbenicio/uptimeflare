@@ -17,8 +17,12 @@ function databaseWithRow(row) {
         bind(...values) {
           calls.bind.push(values)
           return {
-            async first() { return row },
-            async run() { calls.run += 1 },
+            async first() {
+              return row
+            },
+            async run() {
+              calls.run += 1
+            },
           }
         },
       }
@@ -58,11 +62,14 @@ describe('monitor state persistence', () => {
   })
 
   it('creates state only when no row exists', async () => {
-    assert.deepEqual(await readOrCreateMonitorState(databaseWithRow(null)), createInitialMonitorState())
+    assert.deepEqual(
+      await readOrCreateMonitorState(databaseWithRow(null)),
+      createInitialMonitorState()
+    )
     const saved = { ...createInitialMonitorState(), lastUpdate: 123 }
     assert.deepEqual(
       await readOrCreateMonitorState(databaseWithRow({ state_json: JSON.stringify(saved) })),
-      saved,
+      saved
     )
   })
 

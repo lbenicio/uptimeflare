@@ -7,7 +7,8 @@ import { IconDeviceDesktop, IconMoon, IconSun } from '@tabler/icons-react'
 
 function ThemeToggle() {
   const { colorScheme, setColorScheme } = useMantineColorScheme()
-  const nextColorScheme = colorScheme === 'auto' ? 'light' : colorScheme === 'light' ? 'dark' : 'auto'
+  const nextColorScheme =
+    colorScheme === 'auto' ? 'light' : colorScheme === 'light' ? 'dark' : 'auto'
   const label = colorScheme === 'auto' ? 'System' : colorScheme === 'light' ? 'Light' : 'Dark'
   const nextLabel =
     nextColorScheme === 'auto' ? 'System' : nextColorScheme === 'light' ? 'Light' : 'Dark'

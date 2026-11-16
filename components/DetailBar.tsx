@@ -46,7 +46,7 @@ export default function DetailBar({
           let partStart = incident.start[errorIndex]
           let partEnd =
             errorIndex === incident.error.length - 1
-              ? incident.end ?? currentTime
+              ? (incident.end ?? currentTime)
               : incident.start[errorIndex + 1]
           partStart = Math.max(partStart, dayStart)
           partEnd = Math.min(partEnd, dayEnd)
@@ -134,7 +134,12 @@ export default function DetailBar({
       >
         {bars}
       </div>
-      <Modal opened={modalOpened} onClose={() => setModalOpened(false)} title={modalTitle} size="lg">
+      <Modal
+        opened={modalOpened}
+        onClose={() => setModalOpened(false)}
+        title={modalTitle}
+        size="lg"
+      >
         {modalContent}
       </Modal>
     </>

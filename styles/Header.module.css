@@ -70,7 +70,10 @@
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 140ms ease, color 140ms ease, border-color 140ms ease;
+  transition:
+    background-color 140ms ease,
+    color 140ms ease,
+    border-color 140ms ease;
 
   @mixin hover {
     border-color: var(--accent);
@@ -93,7 +96,9 @@
   color: var(--text-muted);
   font-size: 13px;
   font-weight: 500;
-  transition: color 140ms ease, background-color 140ms ease;
+  transition:
+    color 140ms ease,
+    background-color 140ms ease;
 
   @mixin hover {
     background-color: var(--surface-muted);
