@@ -195,9 +195,35 @@ const workerConfig: WorkerConfig = {
       certificateExpiryWarningDays: 30,
       certificateZoneName: 'lbenicio.dev',
       // [OPTIONAL] `tooltip` is ONLY used at status page to show a tooltip
-      tooltip: 'He repository for distributin artifact for kubernetes projects',
+      tooltip: 'Helm repository for distributin artifact for kubernetes projects',
       // [OPTIONAL] `statusPageLink` is ONLY used for clickable link at status page
       statusPageLink: 'https://helm.lbenicio.dev',
+      // [OPTIONAL] `hideLatencyChart` will hide status page latency chart if set to true
+      hideLatencyChart: false,
+      // [OPTIONAL] `expectedCodes` is an array of acceptable HTTP response codes, if not specified, default to 2xx
+      expectedCodes: [200],
+      // [OPTIONAL] `timeout` in millisecond, if not specified, default to 10000
+      timeout: 10000,
+      // [OPTIONAL] headers to be sent
+      headers: {
+        'User-Agent': 'Uptimeflare',
+      },
+    },
+    {
+      // `id` should be unique, history will be kept if the `id` remains constant
+      id: 'legal',
+      // `name` is used at status page and callback message
+      name: 'Legal documents',
+      // `method` should be an HTTP method, TCP_PING, or SSL_CERT
+      method: 'GET',
+      // `target` is a valid URL
+      target: 'https://legal.lbenicio.dev',
+      certificateExpiryWarningDays: 30,
+      certificateZoneName: 'lbenicio.dev',
+      // [OPTIONAL] `tooltip` is ONLY used at status page to show a tooltip
+      tooltip: 'Legal documents repository',
+      // [OPTIONAL] `statusPageLink` is ONLY used for clickable link at status page
+      statusPageLink: 'https://legal.lbenicio.dev',
       // [OPTIONAL] `hideLatencyChart` will hide status page latency chart if set to true
       hideLatencyChart: false,
       // [OPTIONAL] `expectedCodes` is an array of acceptable HTTP response codes, if not specified, default to 2xx
