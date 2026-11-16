@@ -8,10 +8,12 @@
     "start:dev": "wrangler dev --config wrangler-dev.toml --test-scheduled --persist-to ../.wrangler/state",
     "deps:install": "npm install --verbose --no-fund --no-audit",
     "deps:ci": "npm ci --verbose --no-fund --no-audit",
-    "deps:update": "npm-check-updates -u && npm run deps:install"
+    "deps:update": "npm-check-updates -u && npm run deps:install",
+    "typecheck": "tsc --noEmit --project tsconfig.json"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20261114.1",
+    "@types/node": "^26",
     "npm-check-updates": "^23.1.1",
     "wrangler": "^4.162.0",
     "typescript": "^7.0.2"
