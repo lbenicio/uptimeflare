@@ -39,6 +39,15 @@ resource "cloudflare_workers_script" "uptimeflare" {
       id   = cloudflare_d1_database.uptimeflare.id
     }
   ]
+
+  # Cloudflare applies this tombstone once, then reports it as stale/removable.
+  # Deletion permanently removes the legacy namespace and its storage.
+  exports = {
+    RemoteChecker = {
+      type  = "durable-object"
+      state = "deleted"
+    }
+  }
 }
 
 resource "cloudflare_workers_cron_trigger" "uptimeflare_worker_cron" {
