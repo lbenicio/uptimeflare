@@ -37,8 +37,6 @@ export type MonitorTarget = {
   body?: string
   responseKeyword?: string
   responseForbiddenKeyword?: string
-  checkProxy?: string
-  checkProxyFallback?: boolean
 }
 
 export type WorkerConfig = {

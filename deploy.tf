@@ -16,12 +16,6 @@ variable "CLOUDFLARE_ACCOUNT_ID" {
   type = string
 }
 
-variable "CREATE_REMOTE_CHECKER_NAMESPACE" {
-  description = "Create the SQLite Durable Object namespace only when it is not already bound."
-  type        = bool
-  default     = false
-}
-
 resource "cloudflare_d1_database" "uptimeflare" {
   account_id = var.CLOUDFLARE_ACCOUNT_ID
   name       = "uptimeflare_state"
@@ -43,18 +37,8 @@ resource "cloudflare_workers_script" "uptimeflare" {
       name = "UPTIMEFLARE_DB"
       type = "d1"
       id   = cloudflare_d1_database.uptimeflare.id
-    },
-    {
-      name       = "REMOTE_CHECKER_DO"
-      type       = "durable_object_namespace"
-      class_name = "RemoteChecker"
     }
   ]
-
-  migrations = var.CREATE_REMOTE_CHECKER_NAMESPACE ? {
-    new_sqlite_classes = ["RemoteChecker"]
-    new_tag            = "v1"
-  } : null
 }
 
 resource "cloudflare_workers_cron_trigger" "uptimeflare_worker_cron" {

@@ -2,12 +2,10 @@ import { maintenances, workerConfig } from '../../uptime.config'
 import { formatStatusChangeNotification, getWorkerLocation, notifyWithApprise } from './util'
 import { MonitorState, MonitorTarget } from '../../types/config'
 import { getStatus } from './monitor'
-import { DurableObject } from 'cloudflare:workers'
 import { readOrCreateMonitorState, writeMonitorState } from '../../lib/monitor-state'
 
 export interface Env {
   UPTIMEFLARE_DB: D1Database
-  REMOTE_CHECKER_DO: DurableObjectNamespace<RemoteChecker>
   CLOUDFLARE_API_TOKEN?: string
 }
 
@@ -91,61 +89,7 @@ const Worker = {
         // console.log(`[${workerLocation}] Checking ${monitor.name}...`)
 
         let monitorStatusChanged: boolean = false
-        let checkLocation: string = workerLocation
-        let status
-
-        if (monitor.checkProxy) {
-          // Initiate a check using proxy (Geo-specific monitoring)
-          try {
-            // console.log('Calling check proxy: ' + monitor.checkProxy)
-            let resp
-            if (monitor.checkProxy.startsWith('worker://')) {
-              const doLoc: string = monitor.checkProxy.replace('worker://', '')
-              const doId: DurableObjectId = env.REMOTE_CHECKER_DO.idFromName(doLoc)
-              const doStub: DurableObjectStub<RemoteChecker> = env.REMOTE_CHECKER_DO.get(doId, {
-                locationHint: doLoc as DurableObjectLocationHint,
-              })
-              resp = await doStub.getLocationAndStatus(monitor)
-              try {
-                // Kill the DO instance after use, to avoid extra resource usage
-                await doStub.kill()
-              } catch (err) {
-                // An error here is expected, ignore it
-              }
-            } else {
-              resp = await (
-                await fetch(monitor.checkProxy, {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify(monitor),
-                })
-              ).json<{
-                location: string
-                status: {
-                  ping: number
-                  up: boolean
-                  err: string
-                  certificate?: import('../../types/config').CertificateCheck
-                }
-              }>()
-            }
-            checkLocation = resp.location
-            status = resp.status
-          } catch (err) {
-            console.error('Error calling proxy: ' + err)
-            if (monitor.checkProxyFallback) {
-              // console.log('Falling back to local check...')
-              status = await getStatus(monitor, env)
-            } else {
-              status = { ping: 0, up: false, err: 'Error initiating check from remote worker' }
-            }
-          }
-        } else {
-          // Initiate a check from the current location
-          status = await getStatus(monitor, env)
-        }
-
-        // const status = await getStatus(monitor, env)
+        const status = await getStatus(monitor, env)
         const currentTimeSecond = Math.round(Date.now() / 1000)
 
         if (status.certificate) {
@@ -284,7 +228,7 @@ const Worker = {
         latencyLists.all = []
 
         const record = {
-          loc: checkLocation,
+          loc: workerLocation,
           ping: status.ping,
           time: currentTimeSecond,
         }
@@ -346,38 +290,3 @@ const Worker = {
 }
 
 export default Worker
-
-export class RemoteChecker extends DurableObject {
-  private env: Env
-
-  constructor(ctx: DurableObjectState, env: Env) {
-    super(ctx, env)
-    this.env = env
-  }
-
-  async getLocationAndStatus(monitor: MonitorTarget): Promise<{
-    location: string
-    status: {
-      ping: number
-      up: boolean
-      err: string
-      certificate?: import('../../types/config').CertificateCheck
-    }
-  }> {
-    const colo = (await getWorkerLocation()) as string
-    console.log(`Running remote checker (DurableObject) at ${colo}...`)
-    const status = await getStatus(monitor, this.env)
-    return {
-      location: colo,
-      status: status,
-    }
-  }
-
-  async kill(): Promise<void> {
-    // Throwing an error in `blockConcurrencyWhile` will terminate the Durable Object instance
-    // https://developers.cloudflare.com/durable-objects/api/state/#blockconcurrencywhile
-    this.ctx.blockConcurrencyWhile(async () => {
-      throw 'killed'
-    })
-  }
-}

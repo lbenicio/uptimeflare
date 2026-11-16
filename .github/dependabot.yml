@@ -24,17 +24,6 @@ updates:
       - 'dependencies'
       - 'npm'
 
-  - package-ecosystem: 'npm'
-    directory: '/proxy'
-    schedule:
-      interval: 'weekly'
-    open-pull-requests-limit: 10
-    commit-message:
-      prefix: 'deps'
-    labels:
-      - 'dependencies'
-      - 'npm'
-
   - package-ecosystem: 'github-actions'
     directory: '/'
     schedule:
