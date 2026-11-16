@@ -1,7 +1,7 @@
 {
   "version": 1,
   "lastUpdate": 1748864166,
-  "overallUp": 7,
+  "overallUp": 8,
   "overallDown": 0,
   "incident": {
     "homepage": [{ "start": [1748792641], "end": 1748792641, "error": ["dummy"] }],
@@ -13,7 +13,10 @@
     "newsletter": [{ "start": [1748792641], "end": 1748792641, "error": ["dummy"] }],
     "pgp": [{ "start": [1748792642], "end": 1748792642, "error": ["dummy"] }],
     "contact": [{ "start": [1748792642], "end": 1748792642, "error": ["dummy"] }],
-    "socials": [{ "start": [1748792642], "end": 1748792642, "error": ["dummy"] }]
+    "socials": [{ "start": [1748792642], "end": 1748792642, "error": ["dummy"] }],
+    "apps": [{ "start": [1748792642], "end": 1748792642, "error": ["dummy"] }],
+    "helm": [{ "start": [1748792642], "end": 1748792642, "error": ["dummy"] }],
+    "legal": [{ "start": [1748792642], "end": 1748792642, "error": ["dummy"] }]
   },
   "latency": {
     "homepage": {
@@ -1316,6 +1319,18 @@
         { "loc": "SCL", "ping": 10, "time": 1748863926 },
         { "loc": "SCL", "ping": 460, "time": 1748864168 }
       ],
+      "all": []
+    },
+    "apps": {
+      "recent": [{ "loc": "WAW", "ping": 92, "time": 1748864167 }],
+      "all": []
+    },
+    "helm": {
+      "recent": [{ "loc": "WAW", "ping": 92, "time": 1748864167 }],
+      "all": []
+    },
+    "legal": {
+      "recent": [{ "loc": "WAW", "ping": 92, "time": 1748864167 }],
       "all": []
     }
   }
