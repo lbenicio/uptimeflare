@@ -1,4 +1,5 @@
 import type { MonitorState } from '../types/config'
+import { retryD1Write } from './d1-write-retry'
 
 const STATE_ROW_ID = 1
 
@@ -30,14 +31,20 @@ export async function readOrCreateMonitorState(db: D1Database): Promise<MonitorS
 }
 
 export async function writeMonitorState(db: D1Database, state: MonitorState): Promise<void> {
-  await db
-    .prepare(
-      `INSERT INTO uptimeflare_state (id, state_json, updated_at)
-       VALUES (?, ?, ?)
-       ON CONFLICT(id) DO UPDATE SET
-         state_json = excluded.state_json,
-         updated_at = excluded.updated_at`
-    )
-    .bind(STATE_ROW_ID, JSON.stringify(state), state.lastUpdate)
-    .run()
+  const stateJson = JSON.stringify(state)
+
+  await retryD1Write(() =>
+    db
+      .prepare(
+        `INSERT INTO uptimeflare_state (id, state_json, updated_at)
+         VALUES (?, ?, ?)
+         ON CONFLICT(id) DO UPDATE SET
+           state_json = excluded.state_json,
+           updated_at = excluded.updated_at
+         -- Prevent an ambiguous retry from overwriting a newer scheduled write.
+         WHERE excluded.updated_at > uptimeflare_state.updated_at`
+      )
+      .bind(STATE_ROW_ID, stateJson, state.lastUpdate)
+      .run()
+  )
 }
