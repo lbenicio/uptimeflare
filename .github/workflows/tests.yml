@@ -33,7 +33,38 @@ jobs:
         run: npm --prefix worker run typecheck
 
       - name: Unit tests and coverage gate
-        run: npm run test:unit
+        run: npm run coverage:unit
 
       - name: End-to-end tests
         run: npm run test:e2e
+
+      - name: Preserve coverage report
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: coverage
+          path: coverage/lcov.info
+          retention-days: 1
+
+  codecov:
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    needs: unit-and-e2e
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Retrieve coverage report
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: coverage
+          path: coverage
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
+        with:
+          files: coverage/lcov.info
+          flags: status
+          fail_ci_if_error: true
+          use_oidc: true
