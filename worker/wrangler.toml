@@ -2,6 +2,8 @@ name = "uptimeflare_worker"
 main = "src/index.ts"
 compatibility_date = "2026-11-14"
 compatibility_flags = ["nodejs_compat"]
+workers_dev = false
+preview_urls = false
 
 [observability.logs]
 enabled = true
@@ -17,6 +19,9 @@ persist = true
 [[d1_databases]]
 binding = "UPTIMEFLARE_DB"
 database_name = "uptimeflare_state"
-# Replaced from the Terraform output in the deployment workflow.
+# Injected from UPTIMEFLARE_D1_DATABASE_ID during the Cloudflare build.
 database_id = "00000000-0000-0000-0000-000000000000"
 migrations_dir = "migrations"
+
+[triggers]
+crons = ["* * * * *"]

@@ -1,7 +1,8 @@
 {
   "name": "uptimeflare",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
+  "packageManager": "npm@10.9.2",
   "scripts": {
     "start:dev": "next dev",
     "start:prod": "next start",
@@ -12,7 +13,9 @@
     "deps:install": "npm install --verbose --no-fund --no-audit",
     "deps:ci": "npm ci --verbose --no-fund --no-audit",
     "deps:update": "npm-check-updates -u && npm run deps:install",
-    "cf:deploy": "node scripts/set-wrangler-d1-id.mjs \"$UPTIMEFLARE_D1_DATABASE_ID\" && opennextjs-cloudflare build && opennextjs-cloudflare deploy",
+    "cf:build": "node scripts/set-wrangler-d1-id.mjs \"$UPTIMEFLARE_D1_DATABASE_ID\" && opennextjs-cloudflare build",
+    "cf:deploy:built": "opennextjs-cloudflare deploy",
+    "cf:deploy": "npm run cf:deploy:built",
     "cf:upload": "node scripts/set-wrangler-d1-id.mjs \"$UPTIMEFLARE_D1_DATABASE_ID\" && opennextjs-cloudflare build && opennextjs-cloudflare upload",
     "test:unit": "node --experimental-strip-types --experimental-loader=./test/ts-extension-loader.mjs --experimental-test-module-mocks --experimental-test-coverage --test --test-coverage-include=worker/src/monitor.ts --test-coverage-include=worker/src/util.ts --test-coverage-include=lib/monitor-state.ts --test-coverage-include=lib/d1-write-retry.ts --test-coverage-include=util/color.ts --test-coverage-lines=98 --test-coverage-functions=98 --test-coverage-branches=98 test/unit/*.test.mjs",
     "coverage:unit": "c8 --all --extension .ts --include worker/src/monitor.ts --include worker/src/util.ts --include lib/monitor-state.ts --include lib/d1-write-retry.ts --include util/color.ts --reporter=lcov --reporter=text --reports-dir=coverage npm run test:unit",
