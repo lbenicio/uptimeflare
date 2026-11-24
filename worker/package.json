@@ -4,7 +4,7 @@
   "private": true,
   "packageManager": "npm@10.9.2",
   "scripts": {
-    "cf:build": "node ../scripts/set-wrangler-d1-id.mjs \"$UPTIMEFLARE_D1_DATABASE_ID\" && npm run typecheck",
+    "cf:build": "node ../scripts/set-wrangler-d1-id.mjs && npm run typecheck",
     "cf:deploy:built": "wrangler d1 migrations apply uptimeflare_state --remote --config wrangler.toml && wrangler deploy --config wrangler.toml",
     "cf:deploy": "npm run cf:deploy:built",
     "start:dev": "wrangler dev --config wrangler-dev.toml --test-scheduled --persist-to ../.wrangler/state",

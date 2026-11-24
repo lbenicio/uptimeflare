@@ -44,7 +44,7 @@
     {
       "binding": "UPTIMEFLARE_DB",
       "database_name": "uptimeflare_state",
-      // Injected from UPTIMEFLARE_D1_DATABASE_ID during the Cloudflare build.
+      // Resolved by scripts/set-wrangler-d1-id.mjs from the authenticated D1 listing.
       "database_id": "00000000-0000-0000-0000-000000000000",
       "migrations_dir": "worker/migrations",
     },

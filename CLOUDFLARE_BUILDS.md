@@ -11,7 +11,7 @@ For both projects, select `main` as the production branch and disable Preview Bu
 
 ## Build settings
 
-Add `UPTIMEFLARE_D1_DATABASE_ID` under **Settings → Build → Build variables and secrets** for both Workers. Use the ID of the existing `uptimeflare_state` D1 database. This identifier is a build input, not a credential. The build script injects it into the local Wrangler configs before building.
+The build scripts resolve the `uptimeflare_state` D1 database by name with `wrangler d1 list --json`, then inject its UUID into the local Wrangler configs before building. No duplicate D1 ID build variable is needed. The build token selected in **Settings → Build** must have D1 read access for discovery, plus D1 edit access for the monitor Worker's migration step. Locally, authenticate Wrangler with `wrangler login` or `CLOUDFLARE_API_TOKEN`; never store the token in this repository.
 
 The monitor Worker's deploy command applies pending D1 migrations before publishing the Worker. Its cron schedule is declared in `worker/wrangler.toml`. The D1 database must already exist; Workers Builds does not provision it. Terraform now describes only that database and no longer publishes either Worker or configures the cron trigger.
 
