@@ -14,10 +14,10 @@
     "typecheck": "tsc --noEmit --project tsconfig.json"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^5.20261114.1",
+    "@cloudflare/workers-types": "^5.20261121.1",
     "@types/node": "^26",
     "npm-check-updates": "^23.1.1",
-    "wrangler": "^4.162.0",
+    "wrangler": "^4.166.0",
     "typescript": "^7.0.2"
   }
 }
