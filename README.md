@@ -1,10 +1,10 @@
-# UptimeFlare Status
+# Uptimeflare Status
 
-A Cloudflare Workers deployment of [UptimeFlare](https://github.com/lyc8503/UptimeFlare), with a Next.js status page and a scheduled monitor Worker. The monitor checks configured HTTP, HTTPS, and TCP endpoints, stores status history in Cloudflare D1, and serves the current status through the website and its JSON API.
+A Cloudflare Workers deployment of [Uptimeflare](https://github.com/lyc8503/UptimeFlare), with a Next.js status page and a scheduled monitor Worker. The monitor checks configured HTTP, HTTPS, and TCP endpoints, stores status history in Cloudflare D1, and serves the current status through the website and its JSON API.
 
 ## Deploy
 
-This project uses two Cloudflare Workers and a shared D1 database. Follow [CLOUDFLARE_BUILDS.md](CLOUDFLARE_BUILDS.md) for the required Workers Builds settings, bindings, build token permissions, and optional runtime secrets.
+This project uses two Cloudflare Workers and a shared D1 database.
 
 The checked-in Wrangler configuration uses `status.lbenicio.dev` as the status page domain and `uptimeflare_state` as the D1 database name. Change these values to match your Cloudflare account and domain before deploying your own copy. The OpenNext cache also needs the configured R2 bucket.
 
@@ -45,4 +45,4 @@ GitHub Actions runs the unit and end-to-end tests, coverage checks, and the moni
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request. This project is licensed under the [GNU General Public License v3.0](LICENSE.txt).
+See [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request, and follow the [Code of Conduct](CODE_OF_CONDUCT.md). Report security vulnerabilities using the instructions in [SECURITY.md](SECURITY.md). This project is licensed under the [GNU General Public License v3.0](LICENSE.txt).

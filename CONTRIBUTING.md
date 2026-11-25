@@ -2,6 +2,8 @@
 
 Thanks for considering a contribution.
 
+Please follow the [Code of Conduct](CODE_OF_CONDUCT.md). To report a security vulnerability, use the private reporting instructions in [SECURITY.md](SECURITY.md) rather than opening a public issue.
+
 ## Before opening a pull request
 
 - Keep monitor targets and status-page content intentional; these settings may become public.
