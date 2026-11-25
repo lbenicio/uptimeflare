@@ -3,6 +3,9 @@ import { ColorSchemeScript } from '@mantine/core'
 import Script from 'next/script'
 
 export default function Document() {
+  const analyticsScriptUrl = process.env.NEXT_PUBLIC_UMAMI_SCRIPT_URL
+  const analyticsWebsiteId = process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID
+
   return (
     <Html lang="en">
       <Head>
@@ -11,11 +14,13 @@ export default function Document() {
       <body>
         <Main />
         <NextScript />
-        <Script
-          src="https://analytics.4686189.xyz/script.js"
-          strategy="afterInteractive"
-          data-website-id="8ccc9510-e226-4014-98b2-1bca137c22b4"
-        />
+        {analyticsScriptUrl && analyticsWebsiteId ? (
+          <Script
+            src={analyticsScriptUrl}
+            strategy="afterInteractive"
+            data-website-id={analyticsWebsiteId}
+          />
+        ) : null}
       </body>
     </Html>
   )

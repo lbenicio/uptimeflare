@@ -23,3 +23,7 @@ Set **Build watch paths** so changes build only the affected Worker. Patterns be
 Workers Builds reads `.nvmrc` in each project root to select Node.js 22. Both package manifests pin npm to `10.9.2` for consistent dependency installation.
 
 Use the same restricted Cloudflare build token for both Workers, with Workers Scripts edit and D1 edit access scoped to `uptimeflare_state`. The status page's custom domain may also require Workers Routes edit. Keep the token in Cloudflare's build settings; do not add it to this repository. The GitHub Actions workflows remain responsible for tests, while Cloudflare Workers Builds handles deployment.
+
+The monitor Worker only needs a separate runtime secret named `CLOUDFLARE_API_TOKEN` when a configured monitor uses the Cloudflare edge-certificate check. Add it as a Worker secret for `uptimeflare_worker`, scoped to read the relevant zone certificate data. Do not put it in the Wrangler file or GitHub Actions variables.
+
+Umami is optional and disabled unless both `NEXT_PUBLIC_UMAMI_SCRIPT_URL` and `NEXT_PUBLIC_UMAMI_WEBSITE_ID` are set as build variables for the `uptimeflare` page Worker. These are public browser configuration, not secrets; use an analytics property you control.
